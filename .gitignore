@@ -1,0 +1,45 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual env
+.venv/
+venv/
+ENV/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Secrets & local config overrides
+.env
+.env.*
+!.env.example
+*.pem
+secrets.json
+
+# Runtime (may contain paths; never commit keys)
+# config.json is local; keep example only
+/config.json
+*.log
+
+# Debug captures (must never be committed)
+/debug_captures/
+scripts/out/
+_dbg_*.png
+_dbg_*.jpg
+
+# Local Cursor overrides (optional; keep repo clean)
+.cursor/permissions.json
+.cursor/sandbox.json

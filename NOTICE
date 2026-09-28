@@ -1,0 +1,14 @@
+Joy
+====
+
+灵感致谢
+--------
+
+本项目的产品形态（看屏 → 判断 → 候选回复 → 手动填入、不自动发送）
+灵感来自开源项目 jev-chat（https://github.com/jev-chat）。
+
+Joy 为独立实现：以「国内主流识图 / 视觉 API + OpenAI 兼容自定义端点」
+作为理解层主路径，代码与品牌均不隶属 jev-chat / chatjevs.com。
+
+分发或二次开发时请保留本 NOTICE 与 LICENSE。
+请勿使用「Jev」「jev-chat」「chatjevs」等名称暗示由原作者出品或背书。

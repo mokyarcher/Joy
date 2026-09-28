@@ -1,0 +1,1855 @@
+[
+  {
+    "index": 1,
+    "tag": "[微笑]",
+    "name": "微笑",
+    "filename": "微笑.png",
+    "row": 1,
+    "column": 1,
+    "center_x": 34,
+    "center_y": 33,
+    "crop_box": [
+      14,
+      13,
+      54,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 2,
+    "tag": "[撇嘴]",
+    "name": "撇嘴",
+    "filename": "撇嘴.png",
+    "row": 1,
+    "column": 2,
+    "center_x": 74,
+    "center_y": 33,
+    "crop_box": [
+      54,
+      13,
+      94,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 3,
+    "tag": "[色]",
+    "name": "色",
+    "filename": "色.png",
+    "row": 1,
+    "column": 3,
+    "center_x": 114,
+    "center_y": 33,
+    "crop_box": [
+      94,
+      13,
+      134,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 4,
+    "tag": "[发呆]",
+    "name": "发呆",
+    "filename": "发呆.png",
+    "row": 1,
+    "column": 4,
+    "center_x": 154,
+    "center_y": 33,
+    "crop_box": [
+      134,
+      13,
+      174,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 5,
+    "tag": "[得意]",
+    "name": "得意",
+    "filename": "得意.png",
+    "row": 1,
+    "column": 5,
+    "center_x": 194,
+    "center_y": 33,
+    "crop_box": [
+      174,
+      13,
+      214,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 6,
+    "tag": "[流泪]",
+    "name": "流泪",
+    "filename": "流泪.png",
+    "row": 1,
+    "column": 6,
+    "center_x": 234,
+    "center_y": 33,
+    "crop_box": [
+      214,
+      13,
+      254,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 7,
+    "tag": "[害羞]",
+    "name": "害羞",
+    "filename": "害羞.png",
+    "row": 1,
+    "column": 7,
+    "center_x": 274,
+    "center_y": 33,
+    "crop_box": [
+      254,
+      13,
+      294,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 8,
+    "tag": "[闭嘴]",
+    "name": "闭嘴",
+    "filename": "闭嘴.png",
+    "row": 1,
+    "column": 8,
+    "center_x": 314,
+    "center_y": 33,
+    "crop_box": [
+      294,
+      13,
+      334,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 9,
+    "tag": "[难过]",
+    "name": "难过",
+    "filename": "难过.png",
+    "row": 1,
+    "column": 9,
+    "center_x": 354,
+    "center_y": 33,
+    "crop_box": [
+      334,
+      13,
+      374,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 10,
+    "tag": "[惊讶]",
+    "name": "惊讶",
+    "filename": "惊讶.png",
+    "row": 1,
+    "column": 10,
+    "center_x": 394,
+    "center_y": 33,
+    "crop_box": [
+      374,
+      13,
+      414,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 11,
+    "tag": "[呲牙]",
+    "name": "呲牙",
+    "filename": "呲牙.png",
+    "row": 1,
+    "column": 11,
+    "center_x": 434,
+    "center_y": 33,
+    "crop_box": [
+      414,
+      13,
+      454,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 12,
+    "tag": "[调皮]",
+    "name": "调皮",
+    "filename": "调皮.png",
+    "row": 1,
+    "column": 12,
+    "center_x": 474,
+    "center_y": 33,
+    "crop_box": [
+      454,
+      13,
+      494,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 13,
+    "tag": "[发怒]",
+    "name": "发怒",
+    "filename": "发怒.png",
+    "row": 1,
+    "column": 13,
+    "center_x": 514,
+    "center_y": 33,
+    "crop_box": [
+      494,
+      13,
+      534,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 14,
+    "tag": "[尴尬]",
+    "name": "尴尬",
+    "filename": "尴尬.png",
+    "row": 1,
+    "column": 14,
+    "center_x": 554,
+    "center_y": 33,
+    "crop_box": [
+      534,
+      13,
+      574,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 15,
+    "tag": "[大哭]",
+    "name": "大哭",
+    "filename": "大哭.png",
+    "row": 1,
+    "column": 15,
+    "center_x": 594,
+    "center_y": 33,
+    "crop_box": [
+      574,
+      13,
+      614,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 16,
+    "tag": "[睡]",
+    "name": "睡",
+    "filename": "睡.png",
+    "row": 1,
+    "column": 16,
+    "center_x": 634,
+    "center_y": 33,
+    "crop_box": [
+      614,
+      13,
+      654,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 17,
+    "tag": "[囧]",
+    "name": "囧",
+    "filename": "囧.png",
+    "row": 1,
+    "column": 17,
+    "center_x": 674,
+    "center_y": 33,
+    "crop_box": [
+      654,
+      13,
+      694,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 18,
+    "tag": "[抓狂]",
+    "name": "抓狂",
+    "filename": "抓狂.png",
+    "row": 1,
+    "column": 18,
+    "center_x": 714,
+    "center_y": 33,
+    "crop_box": [
+      694,
+      13,
+      734,
+      53
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 19,
+    "tag": "[吐]",
+    "name": "吐",
+    "filename": "吐.png",
+    "row": 2,
+    "column": 1,
+    "center_x": 34,
+    "center_y": 73,
+    "crop_box": [
+      14,
+      53,
+      54,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 20,
+    "tag": "[偷笑]",
+    "name": "偷笑",
+    "filename": "偷笑.png",
+    "row": 2,
+    "column": 2,
+    "center_x": 74,
+    "center_y": 73,
+    "crop_box": [
+      54,
+      53,
+      94,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 21,
+    "tag": "[愉快]",
+    "name": "愉快",
+    "filename": "愉快.png",
+    "row": 2,
+    "column": 3,
+    "center_x": 114,
+    "center_y": 73,
+    "crop_box": [
+      94,
+      53,
+      134,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 22,
+    "tag": "[白眼]",
+    "name": "白眼",
+    "filename": "白眼.png",
+    "row": 2,
+    "column": 4,
+    "center_x": 154,
+    "center_y": 73,
+    "crop_box": [
+      134,
+      53,
+      174,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 23,
+    "tag": "[傲慢]",
+    "name": "傲慢",
+    "filename": "傲慢.png",
+    "row": 2,
+    "column": 5,
+    "center_x": 194,
+    "center_y": 73,
+    "crop_box": [
+      174,
+      53,
+      214,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 24,
+    "tag": "[困]",
+    "name": "困",
+    "filename": "困.png",
+    "row": 2,
+    "column": 6,
+    "center_x": 234,
+    "center_y": 73,
+    "crop_box": [
+      214,
+      53,
+      254,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 25,
+    "tag": "[衰]",
+    "name": "衰",
+    "filename": "衰.png",
+    "row": 2,
+    "column": 7,
+    "center_x": 274,
+    "center_y": 73,
+    "crop_box": [
+      254,
+      53,
+      294,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 26,
+    "tag": "[晕]",
+    "name": "晕",
+    "filename": "晕.png",
+    "row": 2,
+    "column": 8,
+    "center_x": 314,
+    "center_y": 73,
+    "crop_box": [
+      294,
+      53,
+      334,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 27,
+    "tag": "[嘘]",
+    "name": "嘘",
+    "filename": "嘘.png",
+    "row": 2,
+    "column": 9,
+    "center_x": 354,
+    "center_y": 73,
+    "crop_box": [
+      334,
+      53,
+      374,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 28,
+    "tag": "[疑问]",
+    "name": "疑问",
+    "filename": "疑问.png",
+    "row": 2,
+    "column": 10,
+    "center_x": 394,
+    "center_y": 73,
+    "crop_box": [
+      374,
+      53,
+      414,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 29,
+    "tag": "[咒骂]",
+    "name": "咒骂",
+    "filename": "咒骂.png",
+    "row": 2,
+    "column": 11,
+    "center_x": 434,
+    "center_y": 73,
+    "crop_box": [
+      414,
+      53,
+      454,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 30,
+    "tag": "[悠闲]",
+    "name": "悠闲",
+    "filename": "悠闲.png",
+    "row": 2,
+    "column": 12,
+    "center_x": 474,
+    "center_y": 73,
+    "crop_box": [
+      454,
+      53,
+      494,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 31,
+    "tag": "[憨笑]",
+    "name": "憨笑",
+    "filename": "憨笑.png",
+    "row": 2,
+    "column": 13,
+    "center_x": 514,
+    "center_y": 73,
+    "crop_box": [
+      494,
+      53,
+      534,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 32,
+    "tag": "[惊恐]",
+    "name": "惊恐",
+    "filename": "惊恐.png",
+    "row": 2,
+    "column": 14,
+    "center_x": 554,
+    "center_y": 73,
+    "crop_box": [
+      534,
+      53,
+      574,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 33,
+    "tag": "[骷髅]",
+    "name": "骷髅",
+    "filename": "骷髅.png",
+    "row": 2,
+    "column": 15,
+    "center_x": 594,
+    "center_y": 73,
+    "crop_box": [
+      574,
+      53,
+      614,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 34,
+    "tag": "[敲打]",
+    "name": "敲打",
+    "filename": "敲打.png",
+    "row": 2,
+    "column": 16,
+    "center_x": 634,
+    "center_y": 73,
+    "crop_box": [
+      614,
+      53,
+      654,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 35,
+    "tag": "[再见]",
+    "name": "再见",
+    "filename": "再见.png",
+    "row": 2,
+    "column": 17,
+    "center_x": 674,
+    "center_y": 73,
+    "crop_box": [
+      654,
+      53,
+      694,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 36,
+    "tag": "[擦汗]",
+    "name": "擦汗",
+    "filename": "擦汗.png",
+    "row": 2,
+    "column": 18,
+    "center_x": 714,
+    "center_y": 73,
+    "crop_box": [
+      694,
+      53,
+      734,
+      93
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 37,
+    "tag": "[抠鼻]",
+    "name": "抠鼻",
+    "filename": "抠鼻.png",
+    "row": 3,
+    "column": 1,
+    "center_x": 34,
+    "center_y": 113,
+    "crop_box": [
+      14,
+      93,
+      54,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 38,
+    "tag": "[鼓掌]",
+    "name": "鼓掌",
+    "filename": "鼓掌.png",
+    "row": 3,
+    "column": 2,
+    "center_x": 74,
+    "center_y": 113,
+    "crop_box": [
+      54,
+      93,
+      94,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 39,
+    "tag": "[坏笑]",
+    "name": "坏笑",
+    "filename": "坏笑.png",
+    "row": 3,
+    "column": 3,
+    "center_x": 114,
+    "center_y": 113,
+    "crop_box": [
+      94,
+      93,
+      134,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 40,
+    "tag": "[右哼哼]",
+    "name": "右哼哼",
+    "filename": "右哼哼.png",
+    "row": 3,
+    "column": 4,
+    "center_x": 154,
+    "center_y": 113,
+    "crop_box": [
+      134,
+      93,
+      174,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 41,
+    "tag": "[生病]",
+    "name": "生病",
+    "filename": "生病.png",
+    "row": 3,
+    "column": 5,
+    "center_x": 194,
+    "center_y": 113,
+    "crop_box": [
+      174,
+      93,
+      214,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 42,
+    "tag": "[笑脸]",
+    "name": "笑脸",
+    "filename": "笑脸.png",
+    "row": 3,
+    "column": 6,
+    "center_x": 234,
+    "center_y": 113,
+    "crop_box": [
+      214,
+      93,
+      254,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 43,
+    "tag": "[可怜]",
+    "name": "可怜",
+    "filename": "可怜.png",
+    "row": 3,
+    "column": 7,
+    "center_x": 274,
+    "center_y": 113,
+    "crop_box": [
+      254,
+      93,
+      294,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 44,
+    "tag": "[亲亲]",
+    "name": "亲亲",
+    "filename": "亲亲.png",
+    "row": 3,
+    "column": 8,
+    "center_x": 314,
+    "center_y": 113,
+    "crop_box": [
+      294,
+      93,
+      334,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 45,
+    "tag": "[阴险]",
+    "name": "阴险",
+    "filename": "阴险.png",
+    "row": 3,
+    "column": 9,
+    "center_x": 354,
+    "center_y": 113,
+    "crop_box": [
+      334,
+      93,
+      374,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 46,
+    "tag": "[快哭了]",
+    "name": "快哭了",
+    "filename": "快哭了.png",
+    "row": 3,
+    "column": 10,
+    "center_x": 394,
+    "center_y": 113,
+    "crop_box": [
+      374,
+      93,
+      414,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 47,
+    "tag": "[委屈]",
+    "name": "委屈",
+    "filename": "委屈.png",
+    "row": 3,
+    "column": 11,
+    "center_x": 434,
+    "center_y": 113,
+    "crop_box": [
+      414,
+      93,
+      454,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 48,
+    "tag": "[鄙视]",
+    "name": "鄙视",
+    "filename": "鄙视.png",
+    "row": 3,
+    "column": 12,
+    "center_x": 474,
+    "center_y": 113,
+    "crop_box": [
+      454,
+      93,
+      494,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 49,
+    "tag": "[脸红]",
+    "name": "脸红",
+    "filename": "脸红.png",
+    "row": 3,
+    "column": 13,
+    "center_x": 514,
+    "center_y": 113,
+    "crop_box": [
+      494,
+      93,
+      534,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 50,
+    "tag": "[破涕为笑]",
+    "name": "破涕为笑",
+    "filename": "破涕为笑.png",
+    "row": 3,
+    "column": 14,
+    "center_x": 554,
+    "center_y": 113,
+    "crop_box": [
+      534,
+      93,
+      574,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 51,
+    "tag": "[恐惧]",
+    "name": "恐惧",
+    "filename": "恐惧.png",
+    "row": 3,
+    "column": 15,
+    "center_x": 594,
+    "center_y": 113,
+    "crop_box": [
+      574,
+      93,
+      614,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 52,
+    "tag": "[失望]",
+    "name": "失望",
+    "filename": "失望.png",
+    "row": 3,
+    "column": 16,
+    "center_x": 634,
+    "center_y": 113,
+    "crop_box": [
+      614,
+      93,
+      654,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 53,
+    "tag": "[无语]",
+    "name": "无语",
+    "filename": "无语.png",
+    "row": 3,
+    "column": 17,
+    "center_x": 674,
+    "center_y": 113,
+    "crop_box": [
+      654,
+      93,
+      694,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 54,
+    "tag": "[嘿哈]",
+    "name": "嘿哈",
+    "filename": "嘿哈.png",
+    "row": 3,
+    "column": 18,
+    "center_x": 714,
+    "center_y": 113,
+    "crop_box": [
+      694,
+      93,
+      734,
+      133
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 55,
+    "tag": "[捂脸]",
+    "name": "捂脸",
+    "filename": "捂脸.png",
+    "row": 4,
+    "column": 1,
+    "center_x": 34,
+    "center_y": 153,
+    "crop_box": [
+      14,
+      133,
+      54,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 56,
+    "tag": "[奸笑]",
+    "name": "奸笑",
+    "filename": "奸笑.png",
+    "row": 4,
+    "column": 2,
+    "center_x": 74,
+    "center_y": 153,
+    "crop_box": [
+      54,
+      133,
+      94,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 57,
+    "tag": "[Emm]",
+    "name": "Emm",
+    "filename": "Emm.png",
+    "row": 4,
+    "column": 3,
+    "center_x": 114,
+    "center_y": 153,
+    "crop_box": [
+      94,
+      133,
+      134,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 58,
+    "tag": "[天啊]",
+    "name": "天啊",
+    "filename": "天啊.png",
+    "row": 4,
+    "column": 4,
+    "center_x": 154,
+    "center_y": 153,
+    "crop_box": [
+      134,
+      133,
+      174,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 59,
+    "tag": "[汗]",
+    "name": "汗",
+    "filename": "汗.png",
+    "row": 4,
+    "column": 5,
+    "center_x": 194,
+    "center_y": 153,
+    "crop_box": [
+      174,
+      133,
+      214,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 60,
+    "tag": "[加油]",
+    "name": "加油",
+    "filename": "加油.png",
+    "row": 4,
+    "column": 6,
+    "center_x": 234,
+    "center_y": 153,
+    "crop_box": [
+      214,
+      133,
+      254,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 61,
+    "tag": "[吃瓜]",
+    "name": "吃瓜",
+    "filename": "吃瓜.png",
+    "row": 4,
+    "column": 7,
+    "center_x": 274,
+    "center_y": 153,
+    "crop_box": [
+      254,
+      133,
+      294,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 62,
+    "tag": "[耶]",
+    "name": "耶",
+    "filename": "耶.png",
+    "row": 4,
+    "column": 8,
+    "center_x": 314,
+    "center_y": 153,
+    "crop_box": [
+      294,
+      133,
+      334,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 63,
+    "tag": "[皱眉]",
+    "name": "皱眉",
+    "filename": "皱眉.png",
+    "row": 4,
+    "column": 9,
+    "center_x": 354,
+    "center_y": 153,
+    "crop_box": [
+      334,
+      133,
+      374,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 64,
+    "tag": "[机智]",
+    "name": "机智",
+    "filename": "机智.png",
+    "row": 4,
+    "column": 10,
+    "center_x": 394,
+    "center_y": 153,
+    "crop_box": [
+      374,
+      133,
+      414,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 65,
+    "tag": "[社会社会]",
+    "name": "社会社会",
+    "filename": "社会社会.png",
+    "row": 4,
+    "column": 11,
+    "center_x": 434,
+    "center_y": 153,
+    "crop_box": [
+      414,
+      133,
+      454,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 66,
+    "tag": "[旺柴]",
+    "name": "旺柴",
+    "filename": "旺柴.png",
+    "row": 4,
+    "column": 12,
+    "center_x": 474,
+    "center_y": 153,
+    "crop_box": [
+      454,
+      133,
+      494,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 67,
+    "tag": "[好的]",
+    "name": "好的",
+    "filename": "好的.png",
+    "row": 4,
+    "column": 13,
+    "center_x": 514,
+    "center_y": 153,
+    "crop_box": [
+      494,
+      133,
+      534,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 68,
+    "tag": "[打脸]",
+    "name": "打脸",
+    "filename": "打脸.png",
+    "row": 4,
+    "column": 14,
+    "center_x": 554,
+    "center_y": 153,
+    "crop_box": [
+      534,
+      133,
+      574,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 69,
+    "tag": "[哇]",
+    "name": "哇",
+    "filename": "哇.png",
+    "row": 4,
+    "column": 15,
+    "center_x": 594,
+    "center_y": 153,
+    "crop_box": [
+      574,
+      133,
+      614,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 70,
+    "tag": "[翻白眼]",
+    "name": "翻白眼",
+    "filename": "翻白眼.png",
+    "row": 4,
+    "column": 16,
+    "center_x": 634,
+    "center_y": 153,
+    "crop_box": [
+      614,
+      133,
+      654,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 71,
+    "tag": "[666]",
+    "name": "666",
+    "filename": "666.png",
+    "row": 4,
+    "column": 17,
+    "center_x": 674,
+    "center_y": 153,
+    "crop_box": [
+      654,
+      133,
+      694,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 72,
+    "tag": "[让我看看]",
+    "name": "让我看看",
+    "filename": "让我看看.png",
+    "row": 4,
+    "column": 18,
+    "center_x": 714,
+    "center_y": 153,
+    "crop_box": [
+      694,
+      133,
+      734,
+      173
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 73,
+    "tag": "[强]",
+    "name": "强",
+    "filename": "强.png",
+    "row": 5,
+    "column": 1,
+    "center_x": 34,
+    "center_y": 193,
+    "crop_box": [
+      14,
+      173,
+      54,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 74,
+    "tag": "[拥抱]",
+    "name": "拥抱",
+    "filename": "拥抱.png",
+    "row": 5,
+    "column": 2,
+    "center_x": 74,
+    "center_y": 193,
+    "crop_box": [
+      54,
+      173,
+      94,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 75,
+    "tag": "[心碎]",
+    "name": "心碎",
+    "filename": "心碎.png",
+    "row": 5,
+    "column": 3,
+    "center_x": 114,
+    "center_y": 193,
+    "crop_box": [
+      94,
+      173,
+      134,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 76,
+    "tag": "[爱心]",
+    "name": "爱心",
+    "filename": "爱心.png",
+    "row": 5,
+    "column": 4,
+    "center_x": 154,
+    "center_y": 193,
+    "crop_box": [
+      134,
+      173,
+      174,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 77,
+    "tag": "[嘴唇]",
+    "name": "嘴唇",
+    "filename": "嘴唇.png",
+    "row": 5,
+    "column": 5,
+    "center_x": 194,
+    "center_y": 193,
+    "crop_box": [
+      174,
+      173,
+      214,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 78,
+    "tag": "[裂开]",
+    "name": "裂开",
+    "filename": "裂开.png",
+    "row": 5,
+    "column": 6,
+    "center_x": 234,
+    "center_y": 193,
+    "crop_box": [
+      214,
+      173,
+      254,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 79,
+    "tag": "[苦涩]",
+    "name": "苦涩",
+    "filename": "苦涩.png",
+    "row": 5,
+    "column": 7,
+    "center_x": 274,
+    "center_y": 193,
+    "crop_box": [
+      254,
+      173,
+      294,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 80,
+    "tag": "[叹气]",
+    "name": "叹气",
+    "filename": "叹气.png",
+    "row": 5,
+    "column": 8,
+    "center_x": 314,
+    "center_y": 193,
+    "crop_box": [
+      294,
+      173,
+      334,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 81,
+    "tag": "[弱]",
+    "name": "弱",
+    "filename": "弱.png",
+    "row": 5,
+    "column": 9,
+    "center_x": 354,
+    "center_y": 193,
+    "crop_box": [
+      334,
+      173,
+      374,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 82,
+    "tag": "[握手]",
+    "name": "握手",
+    "filename": "握手.png",
+    "row": 5,
+    "column": 10,
+    "center_x": 394,
+    "center_y": 193,
+    "crop_box": [
+      374,
+      173,
+      414,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 83,
+    "tag": "[胜利]",
+    "name": "胜利",
+    "filename": "胜利.png",
+    "row": 5,
+    "column": 11,
+    "center_x": 434,
+    "center_y": 193,
+    "crop_box": [
+      414,
+      173,
+      454,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 84,
+    "tag": "[抱拳]",
+    "name": "抱拳",
+    "filename": "抱拳.png",
+    "row": 5,
+    "column": 12,
+    "center_x": 474,
+    "center_y": 193,
+    "crop_box": [
+      454,
+      173,
+      494,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 85,
+    "tag": "[勾引]",
+    "name": "勾引",
+    "filename": "勾引.png",
+    "row": 5,
+    "column": 13,
+    "center_x": 514,
+    "center_y": 193,
+    "crop_box": [
+      494,
+      173,
+      534,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 86,
+    "tag": "[拳头]",
+    "name": "拳头",
+    "filename": "拳头.png",
+    "row": 5,
+    "column": 14,
+    "center_x": 554,
+    "center_y": 193,
+    "crop_box": [
+      534,
+      173,
+      574,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 87,
+    "tag": "[OK]",
+    "name": "OK",
+    "filename": "OK.png",
+    "row": 5,
+    "column": 15,
+    "center_x": 594,
+    "center_y": 193,
+    "crop_box": [
+      574,
+      173,
+      614,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 88,
+    "tag": "[合十]",
+    "name": "合十",
+    "filename": "合十.png",
+    "row": 5,
+    "column": 16,
+    "center_x": 634,
+    "center_y": 193,
+    "crop_box": [
+      614,
+      173,
+      654,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 89,
+    "tag": "[便便]",
+    "name": "便便",
+    "filename": "便便.png",
+    "row": 5,
+    "column": 17,
+    "center_x": 674,
+    "center_y": 193,
+    "crop_box": [
+      654,
+      173,
+      694,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 90,
+    "tag": "[炸弹]",
+    "name": "炸弹",
+    "filename": "炸弹.png",
+    "row": 5,
+    "column": 18,
+    "center_x": 714,
+    "center_y": 193,
+    "crop_box": [
+      694,
+      173,
+      734,
+      213
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 91,
+    "tag": "[菜刀]",
+    "name": "菜刀",
+    "filename": "菜刀.png",
+    "row": 6,
+    "column": 1,
+    "center_x": 34,
+    "center_y": 233,
+    "crop_box": [
+      14,
+      213,
+      54,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 92,
+    "tag": "[凋谢]",
+    "name": "凋谢",
+    "filename": "凋谢.png",
+    "row": 6,
+    "column": 2,
+    "center_x": 74,
+    "center_y": 233,
+    "crop_box": [
+      54,
+      213,
+      94,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 93,
+    "tag": "[玫瑰]",
+    "name": "玫瑰",
+    "filename": "玫瑰.png",
+    "row": 6,
+    "column": 3,
+    "center_x": 114,
+    "center_y": 233,
+    "crop_box": [
+      94,
+      213,
+      134,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 94,
+    "tag": "[蛋糕]",
+    "name": "蛋糕",
+    "filename": "蛋糕.png",
+    "row": 6,
+    "column": 4,
+    "center_x": 154,
+    "center_y": 233,
+    "crop_box": [
+      134,
+      213,
+      174,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 95,
+    "tag": "[咖啡]",
+    "name": "咖啡",
+    "filename": "咖啡.png",
+    "row": 6,
+    "column": 5,
+    "center_x": 194,
+    "center_y": 233,
+    "crop_box": [
+      174,
+      213,
+      214,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 96,
+    "tag": "[啤酒]",
+    "name": "啤酒",
+    "filename": "啤酒.png",
+    "row": 6,
+    "column": 6,
+    "center_x": 234,
+    "center_y": 233,
+    "crop_box": [
+      214,
+      213,
+      254,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 97,
+    "tag": "[月亮]",
+    "name": "月亮",
+    "filename": "月亮.png",
+    "row": 6,
+    "column": 7,
+    "center_x": 274,
+    "center_y": 233,
+    "crop_box": [
+      254,
+      213,
+      294,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 98,
+    "tag": "[太阳]",
+    "name": "太阳",
+    "filename": "太阳.png",
+    "row": 6,
+    "column": 8,
+    "center_x": 314,
+    "center_y": 233,
+    "crop_box": [
+      294,
+      213,
+      334,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 99,
+    "tag": "[庆祝]",
+    "name": "庆祝",
+    "filename": "庆祝.png",
+    "row": 6,
+    "column": 9,
+    "center_x": 354,
+    "center_y": 233,
+    "crop_box": [
+      334,
+      213,
+      374,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 100,
+    "tag": "[礼物]",
+    "name": "礼物",
+    "filename": "礼物.png",
+    "row": 6,
+    "column": 10,
+    "center_x": 394,
+    "center_y": 233,
+    "crop_box": [
+      374,
+      213,
+      414,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 101,
+    "tag": "[红包]",
+    "name": "红包",
+    "filename": "红包.png",
+    "row": 6,
+    "column": 11,
+    "center_x": 434,
+    "center_y": 233,
+    "crop_box": [
+      414,
+      213,
+      454,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 102,
+    "tag": "[發]",
+    "name": "發",
+    "filename": "發.png",
+    "row": 6,
+    "column": 12,
+    "center_x": 474,
+    "center_y": 233,
+    "crop_box": [
+      454,
+      213,
+      494,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 103,
+    "tag": "[福]",
+    "name": "福",
+    "filename": "福.png",
+    "row": 6,
+    "column": 13,
+    "center_x": 514,
+    "center_y": 233,
+    "crop_box": [
+      494,
+      213,
+      534,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 104,
+    "tag": "[烟花]",
+    "name": "烟花",
+    "filename": "烟花.png",
+    "row": 6,
+    "column": 14,
+    "center_x": 554,
+    "center_y": 233,
+    "crop_box": [
+      534,
+      213,
+      574,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 105,
+    "tag": "[转圈]",
+    "name": "转圈",
+    "filename": "转圈.png",
+    "row": 6,
+    "column": 15,
+    "center_x": 594,
+    "center_y": 233,
+    "crop_box": [
+      574,
+      213,
+      614,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 106,
+    "tag": "[发抖]",
+    "name": "发抖",
+    "filename": "发抖.png",
+    "row": 6,
+    "column": 16,
+    "center_x": 634,
+    "center_y": 233,
+    "crop_box": [
+      614,
+      213,
+      654,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 107,
+    "tag": "[跳跳]",
+    "name": "跳跳",
+    "filename": "跳跳.png",
+    "row": 6,
+    "column": 17,
+    "center_x": 674,
+    "center_y": 233,
+    "crop_box": [
+      654,
+      213,
+      694,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 108,
+    "tag": "[猪头]",
+    "name": "猪头",
+    "filename": "猪头.png",
+    "row": 6,
+    "column": 18,
+    "center_x": 714,
+    "center_y": 233,
+    "crop_box": [
+      694,
+      213,
+      734,
+      253
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  },
+  {
+    "index": 109,
+    "tag": "[爆竹]",
+    "name": "爆竹",
+    "filename": "爆竹.png",
+    "row": 7,
+    "column": 1,
+    "center_x": 34,
+    "center_y": 273,
+    "crop_box": [
+      14,
+      253,
+      54,
+      293
+    ],
+    "source": "e8b7cbed-69e8-40d1-bcef-7bb3a6f23826.png"
+  }
+]

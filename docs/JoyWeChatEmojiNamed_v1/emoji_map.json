@@ -1,0 +1,765 @@
+[
+  {
+    "index": 1,
+    "tag": "[微笑]",
+    "name": "微笑",
+    "filename": "微笑.png",
+    "source_crop": "emoji_001.png"
+  },
+  {
+    "index": 2,
+    "tag": "[撇嘴]",
+    "name": "撇嘴",
+    "filename": "撇嘴.png",
+    "source_crop": "emoji_002.png"
+  },
+  {
+    "index": 3,
+    "tag": "[色]",
+    "name": "色",
+    "filename": "色.png",
+    "source_crop": "emoji_003.png"
+  },
+  {
+    "index": 4,
+    "tag": "[发呆]",
+    "name": "发呆",
+    "filename": "发呆.png",
+    "source_crop": "emoji_004.png"
+  },
+  {
+    "index": 5,
+    "tag": "[得意]",
+    "name": "得意",
+    "filename": "得意.png",
+    "source_crop": "emoji_005.png"
+  },
+  {
+    "index": 6,
+    "tag": "[流泪]",
+    "name": "流泪",
+    "filename": "流泪.png",
+    "source_crop": "emoji_006.png"
+  },
+  {
+    "index": 7,
+    "tag": "[害羞]",
+    "name": "害羞",
+    "filename": "害羞.png",
+    "source_crop": "emoji_007.png"
+  },
+  {
+    "index": 8,
+    "tag": "[闭嘴]",
+    "name": "闭嘴",
+    "filename": "闭嘴.png",
+    "source_crop": "emoji_008.png"
+  },
+  {
+    "index": 9,
+    "tag": "[睡]",
+    "name": "睡",
+    "filename": "睡.png",
+    "source_crop": "emoji_009.png"
+  },
+  {
+    "index": 10,
+    "tag": "[大哭]",
+    "name": "大哭",
+    "filename": "大哭.png",
+    "source_crop": "emoji_010.png"
+  },
+  {
+    "index": 11,
+    "tag": "[尴尬]",
+    "name": "尴尬",
+    "filename": "尴尬.png",
+    "source_crop": "emoji_011.png"
+  },
+  {
+    "index": 12,
+    "tag": "[发怒]",
+    "name": "发怒",
+    "filename": "发怒.png",
+    "source_crop": "emoji_012.png"
+  },
+  {
+    "index": 13,
+    "tag": "[调皮]",
+    "name": "调皮",
+    "filename": "调皮.png",
+    "source_crop": "emoji_013.png"
+  },
+  {
+    "index": 14,
+    "tag": "[呲牙]",
+    "name": "呲牙",
+    "filename": "呲牙.png",
+    "source_crop": "emoji_014.png"
+  },
+  {
+    "index": 15,
+    "tag": "[惊讶]",
+    "name": "惊讶",
+    "filename": "惊讶.png",
+    "source_crop": "emoji_015.png"
+  },
+  {
+    "index": 16,
+    "tag": "[难过]",
+    "name": "难过",
+    "filename": "难过.png",
+    "source_crop": "emoji_016.png"
+  },
+  {
+    "index": 17,
+    "tag": "[囧]",
+    "name": "囧",
+    "filename": "囧.png",
+    "source_crop": "emoji_017.png"
+  },
+  {
+    "index": 18,
+    "tag": "[抓狂]",
+    "name": "抓狂",
+    "filename": "抓狂.png",
+    "source_crop": "emoji_018.png"
+  },
+  {
+    "index": 19,
+    "tag": "[吐]",
+    "name": "吐",
+    "filename": "吐.png",
+    "source_crop": "emoji_019.png"
+  },
+  {
+    "index": 20,
+    "tag": "[偷笑]",
+    "name": "偷笑",
+    "filename": "偷笑.png",
+    "source_crop": "emoji_020.png"
+  },
+  {
+    "index": 21,
+    "tag": "[愉快]",
+    "name": "愉快",
+    "filename": "愉快.png",
+    "source_crop": "emoji_021.png"
+  },
+  {
+    "index": 22,
+    "tag": "[白眼]",
+    "name": "白眼",
+    "filename": "白眼.png",
+    "source_crop": "emoji_022.png"
+  },
+  {
+    "index": 23,
+    "tag": "[傲慢]",
+    "name": "傲慢",
+    "filename": "傲慢.png",
+    "source_crop": "emoji_023.png"
+  },
+  {
+    "index": 24,
+    "tag": "[困]",
+    "name": "困",
+    "filename": "困.png",
+    "source_crop": "emoji_024.png"
+  },
+  {
+    "index": 25,
+    "tag": "[惊恐]",
+    "name": "惊恐",
+    "filename": "惊恐.png",
+    "source_crop": "emoji_025.png"
+  },
+  {
+    "index": 26,
+    "tag": "[憨笑]",
+    "name": "憨笑",
+    "filename": "憨笑.png",
+    "source_crop": "emoji_026.png"
+  },
+  {
+    "index": 27,
+    "tag": "[悠闲]",
+    "name": "悠闲",
+    "filename": "悠闲.png",
+    "source_crop": "emoji_027.png"
+  },
+  {
+    "index": 28,
+    "tag": "[咒骂]",
+    "name": "咒骂",
+    "filename": "咒骂.png",
+    "source_crop": "emoji_028.png"
+  },
+  {
+    "index": 29,
+    "tag": "[疑问]",
+    "name": "疑问",
+    "filename": "疑问.png",
+    "source_crop": "emoji_029.png"
+  },
+  {
+    "index": 30,
+    "tag": "[嘘]",
+    "name": "嘘",
+    "filename": "嘘.png",
+    "source_crop": "emoji_030.png"
+  },
+  {
+    "index": 31,
+    "tag": "[晕]",
+    "name": "晕",
+    "filename": "晕.png",
+    "source_crop": "emoji_031.png"
+  },
+  {
+    "index": 32,
+    "tag": "[衰]",
+    "name": "衰",
+    "filename": "衰.png",
+    "source_crop": "emoji_032.png"
+  },
+  {
+    "index": 33,
+    "tag": "[骷髅]",
+    "name": "骷髅",
+    "filename": "骷髅.png",
+    "source_crop": "emoji_033.png"
+  },
+  {
+    "index": 34,
+    "tag": "[敲打]",
+    "name": "敲打",
+    "filename": "敲打.png",
+    "source_crop": "emoji_034.png"
+  },
+  {
+    "index": 35,
+    "tag": "[再见]",
+    "name": "再见",
+    "filename": "再见.png",
+    "source_crop": "emoji_035.png"
+  },
+  {
+    "index": 36,
+    "tag": "[擦汗]",
+    "name": "擦汗",
+    "filename": "擦汗.png",
+    "source_crop": "emoji_036.png"
+  },
+  {
+    "index": 37,
+    "tag": "[抠鼻]",
+    "name": "抠鼻",
+    "filename": "抠鼻.png",
+    "source_crop": "emoji_037.png"
+  },
+  {
+    "index": 38,
+    "tag": "[鼓掌]",
+    "name": "鼓掌",
+    "filename": "鼓掌.png",
+    "source_crop": "emoji_038.png"
+  },
+  {
+    "index": 39,
+    "tag": "[坏笑]",
+    "name": "坏笑",
+    "filename": "坏笑.png",
+    "source_crop": "emoji_039.png"
+  },
+  {
+    "index": 40,
+    "tag": "[右哼哼]",
+    "name": "右哼哼",
+    "filename": "右哼哼.png",
+    "source_crop": "emoji_040.png"
+  },
+  {
+    "index": 41,
+    "tag": "[鄙视]",
+    "name": "鄙视",
+    "filename": "鄙视.png",
+    "source_crop": "emoji_041.png"
+  },
+  {
+    "index": 42,
+    "tag": "[委屈]",
+    "name": "委屈",
+    "filename": "委屈.png",
+    "source_crop": "emoji_042.png"
+  },
+  {
+    "index": 43,
+    "tag": "[快哭了]",
+    "name": "快哭了",
+    "filename": "快哭了.png",
+    "source_crop": "emoji_043.png"
+  },
+  {
+    "index": 44,
+    "tag": "[阴险]",
+    "name": "阴险",
+    "filename": "阴险.png",
+    "source_crop": "emoji_044.png"
+  },
+  {
+    "index": 45,
+    "tag": "[亲亲]",
+    "name": "亲亲",
+    "filename": "亲亲.png",
+    "source_crop": "emoji_045.png"
+  },
+  {
+    "index": 46,
+    "tag": "[可怜]",
+    "name": "可怜",
+    "filename": "可怜.png",
+    "source_crop": "emoji_046.png"
+  },
+  {
+    "index": 47,
+    "tag": "[笑脸]",
+    "name": "笑脸",
+    "filename": "笑脸.png",
+    "source_crop": "emoji_047.png"
+  },
+  {
+    "index": 48,
+    "tag": "[生病]",
+    "name": "生病",
+    "filename": "生病.png",
+    "source_crop": "emoji_048.png"
+  },
+  {
+    "index": 49,
+    "tag": "[脸红]",
+    "name": "脸红",
+    "filename": "脸红.png",
+    "source_crop": "emoji_049.png"
+  },
+  {
+    "index": 50,
+    "tag": "[破涕为笑]",
+    "name": "破涕为笑",
+    "filename": "破涕为笑.png",
+    "source_crop": "emoji_050.png"
+  },
+  {
+    "index": 51,
+    "tag": "[恐惧]",
+    "name": "恐惧",
+    "filename": "恐惧.png",
+    "source_crop": "emoji_051.png"
+  },
+  {
+    "index": 52,
+    "tag": "[失望]",
+    "name": "失望",
+    "filename": "失望.png",
+    "source_crop": "emoji_052.png"
+  },
+  {
+    "index": 53,
+    "tag": "[无语]",
+    "name": "无语",
+    "filename": "无语.png",
+    "source_crop": "emoji_053.png"
+  },
+  {
+    "index": 54,
+    "tag": "[嘿哈]",
+    "name": "嘿哈",
+    "filename": "嘿哈.png",
+    "source_crop": "emoji_054.png"
+  },
+  {
+    "index": 55,
+    "tag": "[捂脸]",
+    "name": "捂脸",
+    "filename": "捂脸.png",
+    "source_crop": "emoji_055.png"
+  },
+  {
+    "index": 56,
+    "tag": "[奸笑]",
+    "name": "奸笑",
+    "filename": "奸笑.png",
+    "source_crop": "emoji_056.png"
+  },
+  {
+    "index": 57,
+    "tag": "[机智]",
+    "name": "机智",
+    "filename": "机智.png",
+    "source_crop": "emoji_057.png"
+  },
+  {
+    "index": 58,
+    "tag": "[皱眉]",
+    "name": "皱眉",
+    "filename": "皱眉.png",
+    "source_crop": "emoji_058.png"
+  },
+  {
+    "index": 59,
+    "tag": "[耶]",
+    "name": "耶",
+    "filename": "耶.png",
+    "source_crop": "emoji_059.png"
+  },
+  {
+    "index": 60,
+    "tag": "[吃瓜]",
+    "name": "吃瓜",
+    "filename": "吃瓜.png",
+    "source_crop": "emoji_060.png"
+  },
+  {
+    "index": 61,
+    "tag": "[加油]",
+    "name": "加油",
+    "filename": "加油.png",
+    "source_crop": "emoji_061.png"
+  },
+  {
+    "index": 62,
+    "tag": "[汗]",
+    "name": "汗",
+    "filename": "汗.png",
+    "source_crop": "emoji_062.png"
+  },
+  {
+    "index": 63,
+    "tag": "[天啊]",
+    "name": "天啊",
+    "filename": "天啊.png",
+    "source_crop": "emoji_063.png"
+  },
+  {
+    "index": 64,
+    "tag": "[Emm]",
+    "name": "Emm",
+    "filename": "Emm.png",
+    "source_crop": "emoji_064.png"
+  },
+  {
+    "index": 65,
+    "tag": "[社会社会]",
+    "name": "社会社会",
+    "filename": "社会社会.png",
+    "source_crop": "emoji_065.png"
+  },
+  {
+    "index": 66,
+    "tag": "[旺柴]",
+    "name": "旺柴",
+    "filename": "旺柴.png",
+    "source_crop": "emoji_066.png"
+  },
+  {
+    "index": 67,
+    "tag": "[好的]",
+    "name": "好的",
+    "filename": "好的.png",
+    "source_crop": "emoji_067.png"
+  },
+  {
+    "index": 68,
+    "tag": "[打脸]",
+    "name": "打脸",
+    "filename": "打脸.png",
+    "source_crop": "emoji_068.png"
+  },
+  {
+    "index": 69,
+    "tag": "[哇]",
+    "name": "哇",
+    "filename": "哇.png",
+    "source_crop": "emoji_069.png"
+  },
+  {
+    "index": 70,
+    "tag": "[翻白眼]",
+    "name": "翻白眼",
+    "filename": "翻白眼.png",
+    "source_crop": "emoji_070.png"
+  },
+  {
+    "index": 71,
+    "tag": "[666]",
+    "name": "666",
+    "filename": "666.png",
+    "source_crop": "emoji_071.png"
+  },
+  {
+    "index": 72,
+    "tag": "[让我看看]",
+    "name": "让我看看",
+    "filename": "让我看看.png",
+    "source_crop": "emoji_072.png"
+  },
+  {
+    "index": 73,
+    "tag": "[叹气]",
+    "name": "叹气",
+    "filename": "叹气.png",
+    "source_crop": "emoji_073.png"
+  },
+  {
+    "index": 74,
+    "tag": "[苦涩]",
+    "name": "苦涩",
+    "filename": "苦涩.png",
+    "source_crop": "emoji_074.png"
+  },
+  {
+    "index": 75,
+    "tag": "[裂开]",
+    "name": "裂开",
+    "filename": "裂开.png",
+    "source_crop": "emoji_075.png"
+  },
+  {
+    "index": 76,
+    "tag": "[嘴唇]",
+    "name": "嘴唇",
+    "filename": "嘴唇.png",
+    "source_crop": "emoji_076.png"
+  },
+  {
+    "index": 77,
+    "tag": "[爱心]",
+    "name": "爱心",
+    "filename": "爱心.png",
+    "source_crop": "emoji_077.png"
+  },
+  {
+    "index": 78,
+    "tag": "[心碎]",
+    "name": "心碎",
+    "filename": "心碎.png",
+    "source_crop": "emoji_078.png"
+  },
+  {
+    "index": 79,
+    "tag": "[拥抱]",
+    "name": "拥抱",
+    "filename": "拥抱.png",
+    "source_crop": "emoji_079.png"
+  },
+  {
+    "index": 80,
+    "tag": "[强]",
+    "name": "强",
+    "filename": "强.png",
+    "source_crop": "emoji_080.png"
+  },
+  {
+    "index": 81,
+    "tag": "[弱]",
+    "name": "弱",
+    "filename": "弱.png",
+    "source_crop": "emoji_081.png"
+  },
+  {
+    "index": 82,
+    "tag": "[握手]",
+    "name": "握手",
+    "filename": "握手.png",
+    "source_crop": "emoji_082.png"
+  },
+  {
+    "index": 83,
+    "tag": "[胜利]",
+    "name": "胜利",
+    "filename": "胜利.png",
+    "source_crop": "emoji_083.png"
+  },
+  {
+    "index": 84,
+    "tag": "[抱拳]",
+    "name": "抱拳",
+    "filename": "抱拳.png",
+    "source_crop": "emoji_084.png"
+  },
+  {
+    "index": 85,
+    "tag": "[勾引]",
+    "name": "勾引",
+    "filename": "勾引.png",
+    "source_crop": "emoji_085.png"
+  },
+  {
+    "index": 86,
+    "tag": "[拳头]",
+    "name": "拳头",
+    "filename": "拳头.png",
+    "source_crop": "emoji_086.png"
+  },
+  {
+    "index": 87,
+    "tag": "[OK]",
+    "name": "OK",
+    "filename": "OK.png",
+    "source_crop": "emoji_087.png"
+  },
+  {
+    "index": 88,
+    "tag": "[合十]",
+    "name": "合十",
+    "filename": "合十.png",
+    "source_crop": "emoji_088.png"
+  },
+  {
+    "index": 89,
+    "tag": "[啤酒]",
+    "name": "啤酒",
+    "filename": "啤酒.png",
+    "source_crop": "emoji_089.png"
+  },
+  {
+    "index": 90,
+    "tag": "[咖啡]",
+    "name": "咖啡",
+    "filename": "咖啡.png",
+    "source_crop": "emoji_090.png"
+  },
+  {
+    "index": 91,
+    "tag": "[蛋糕]",
+    "name": "蛋糕",
+    "filename": "蛋糕.png",
+    "source_crop": "emoji_091.png"
+  },
+  {
+    "index": 92,
+    "tag": "[玫瑰]",
+    "name": "玫瑰",
+    "filename": "玫瑰.png",
+    "source_crop": "emoji_092.png"
+  },
+  {
+    "index": 93,
+    "tag": "[凋谢]",
+    "name": "凋谢",
+    "filename": "凋谢.png",
+    "source_crop": "emoji_093.png"
+  },
+  {
+    "index": 94,
+    "tag": "[菜刀]",
+    "name": "菜刀",
+    "filename": "菜刀.png",
+    "source_crop": "emoji_094.png"
+  },
+  {
+    "index": 95,
+    "tag": "[炸弹]",
+    "name": "炸弹",
+    "filename": "炸弹.png",
+    "source_crop": "emoji_095.png"
+  },
+  {
+    "index": 96,
+    "tag": "[便便]",
+    "name": "便便",
+    "filename": "便便.png",
+    "source_crop": "emoji_096.png"
+  },
+  {
+    "index": 97,
+    "tag": "[月亮]",
+    "name": "月亮",
+    "filename": "月亮.png",
+    "source_crop": "emoji_097.png"
+  },
+  {
+    "index": 98,
+    "tag": "[太阳]",
+    "name": "太阳",
+    "filename": "太阳.png",
+    "source_crop": "emoji_098.png"
+  },
+  {
+    "index": 99,
+    "tag": "[庆祝]",
+    "name": "庆祝",
+    "filename": "庆祝.png",
+    "source_crop": "emoji_099.png"
+  },
+  {
+    "index": 100,
+    "tag": "[礼物]",
+    "name": "礼物",
+    "filename": "礼物.png",
+    "source_crop": "emoji_100.png"
+  },
+  {
+    "index": 101,
+    "tag": "[红包]",
+    "name": "红包",
+    "filename": "红包.png",
+    "source_crop": "emoji_101.png"
+  },
+  {
+    "index": 102,
+    "tag": "[發]",
+    "name": "發",
+    "filename": "發.png",
+    "source_crop": "emoji_102.png"
+  },
+  {
+    "index": 103,
+    "tag": "[福]",
+    "name": "福",
+    "filename": "福.png",
+    "source_crop": "emoji_103.png"
+  },
+  {
+    "index": 104,
+    "tag": "[烟花]",
+    "name": "烟花",
+    "filename": "烟花.png",
+    "source_crop": "emoji_104.png"
+  },
+  {
+    "index": 105,
+    "tag": "[爆竹]",
+    "name": "爆竹",
+    "filename": "爆竹.png",
+    "source_crop": "emoji_105.png"
+  },
+  {
+    "index": 106,
+    "tag": "[猪头]",
+    "name": "猪头",
+    "filename": "猪头.png",
+    "source_crop": "emoji_106.png"
+  },
+  {
+    "index": 107,
+    "tag": "[跳跳]",
+    "name": "跳跳",
+    "filename": "跳跳.png",
+    "source_crop": "emoji_107.png"
+  },
+  {
+    "index": 108,
+    "tag": "[发抖]",
+    "name": "发抖",
+    "filename": "发抖.png",
+    "source_crop": "emoji_108.png"
+  },
+  {
+    "index": 109,
+    "tag": "[转圈]",
+    "name": "转圈",
+    "filename": "转圈.png",
+    "source_crop": "emoji_109.png"
+  }
+]
