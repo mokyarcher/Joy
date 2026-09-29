@@ -53,6 +53,39 @@ def _wheel_up(steps: int = 6, *, delta: int = 120) -> None:
         time.sleep(0.08)
 
 
+def _wheel_down(steps: int = 6, *, delta: int = 120) -> None:
+    for _ in range(max(1, steps)):
+        win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -int(delta), 0)
+        time.sleep(0.05)
+
+
+def _scroll_chat_to_latest(
+    hwnd: int,
+    *,
+    msg_left: float,
+    scroll_steps: int,
+    on_progress: ProgressCb | None = None,
+) -> None:
+    """取样上滑后滚回会话底部（最新消息），避免用户还要自己滑回去。"""
+
+    def _p(msg: str) -> None:
+        if on_progress:
+            on_progress(msg)
+        log.info("pull: %s", msg)
+
+    # 多滚几步，确保过冲到最底（多滚无害）
+    steps = max(12, int(scroll_steps) + 16)
+    mid = _client_xy(hwnd, msg_left + (1.0 - msg_left) * 0.45, 0.50)
+    if mid:
+        focus_window(hwnd)
+        time.sleep(0.06)
+        _click_screen(*mid)
+        time.sleep(0.10)
+    _p(f"滚回最新消息（下滑 {steps} 步）…")
+    _wheel_down(steps, delta=240)
+    time.sleep(0.20)
+
+
 def _client_xy(hwnd: int, xr: float, yr: float) -> tuple[int, int] | None:
     rect = client_rect_screen(hwnd)
     if rect is None:
@@ -438,58 +471,76 @@ def pull_chat_via_multiselect(
     _p(f"上滑 {scroll_steps} 步…")
     _wheel_up(int(scroll_steps), delta=180)
     time.sleep(0.45)
+    scrolled_up = True
 
-    # —— 4) 「选择到这里」——
-    _p("OCR 定位：选择到这里…")
-    sel = _locate(
-        hwnd,
-        cfg,
-        label="选择到这里",
-        needles=["选择到这里", "选到这里"],
-        prefer_lower=False,
-        use_vision=True,
-        vision_hint="多选模式下的「↓ 选择到这里」按钮",
-    )
-    if sel is None:
-        _dismiss_multiselect(hwnd, msg_left=msg_left)
-        return PullHistoryResult(False, detail="未找到「选择到这里」，请上滑后再试或改用导入")
-    _p(f"点击选择到这里 ({sel[0]:.2f},{sel[1]:.2f})")
-    _click_ratio(hwnd, sel[0], sel[1])
-    time.sleep(0.50)
-
-    # —— 5) 「复制」——
-    _p("OCR 定位：复制…")
-    copy_pt = _locate(
-        hwnd,
-        cfg,
-        label="复制",
-        needles=["复制"],
-        prefer_lower=True,
-        use_vision=True,
-        vision_hint="多选底栏的「复制」，不要点删除",
-    )
-    if copy_pt is None:
-        _dismiss_multiselect(hwnd, msg_left=msg_left)
-        return PullHistoryResult(False, detail="未找到底栏「复制」")
-    # 安全：复制不应太靠右下（那里常是删除）
-    if copy_pt[0] > 0.82:
-        _dismiss_multiselect(hwnd, msg_left=msg_left)
-        return PullHistoryResult(False, detail="「复制」定位过右，疑似点到删除，已中止")
-    _p(f"点击复制 ({copy_pt[0]:.2f},{copy_pt[1]:.2f})")
-    _click_ratio(hwnd, copy_pt[0], copy_pt[1])
-    time.sleep(0.40)
-
-    text = (_read_clipboard_text() or "").strip()
-    # 复制后多选往往已自动退出；切勿 Esc（会关掉当前聊天窗）
-    _dismiss_multiselect(hwnd, msg_left=msg_left)
-
-    if not text or text == marker or text.startswith("__JOY_PULL_MARK_"):
-        return PullHistoryResult(
-            False,
-            detail="剪贴板未拿到聊天内容，请改用「导入上下文」",
+    try:
+        # —— 4) 「选择到这里」——
+        _p("OCR 定位：选择到这里…")
+        sel = _locate(
+            hwnd,
+            cfg,
+            label="选择到这里",
+            needles=["选择到这里", "选到这里"],
+            prefer_lower=False,
+            use_vision=True,
+            vision_hint="多选模式下的「↓ 选择到这里」按钮",
         )
-    if len(text) < 4:
-        return PullHistoryResult(False, detail="剪贴板内容过短")
+        if sel is None:
+            _dismiss_multiselect(hwnd, msg_left=msg_left)
+            return PullHistoryResult(
+                False, detail="未找到「选择到这里」，请上滑后再试或改用导入"
+            )
+        _p(f"点击选择到这里 ({sel[0]:.2f},{sel[1]:.2f})")
+        _click_ratio(hwnd, sel[0], sel[1])
+        time.sleep(0.50)
 
-    log.info("pull: clipboard ok chars=%s", len(text))
-    return PullHistoryResult(True, text=text, detail=f"已复制 {len(text)} 字")
+        # —— 5) 「复制」——
+        _p("OCR 定位：复制…")
+        copy_pt = _locate(
+            hwnd,
+            cfg,
+            label="复制",
+            needles=["复制"],
+            prefer_lower=True,
+            use_vision=True,
+            vision_hint="多选底栏的「复制」，不要点删除",
+        )
+        if copy_pt is None:
+            _dismiss_multiselect(hwnd, msg_left=msg_left)
+            return PullHistoryResult(False, detail="未找到底栏「复制」")
+        # 安全：复制不应太靠右下（那里常是删除）
+        if copy_pt[0] > 0.82:
+            _dismiss_multiselect(hwnd, msg_left=msg_left)
+            return PullHistoryResult(
+                False, detail="「复制」定位过右，疑似点到删除，已中止"
+            )
+        _p(f"点击复制 ({copy_pt[0]:.2f},{copy_pt[1]:.2f})")
+        _click_ratio(hwnd, copy_pt[0], copy_pt[1])
+        time.sleep(0.40)
+
+        text = (_read_clipboard_text() or "").strip()
+        # 复制后多选往往已自动退出；切勿 Esc（会关掉当前聊天窗）
+        _dismiss_multiselect(hwnd, msg_left=msg_left)
+
+        if not text or text == marker or text.startswith("__JOY_PULL_MARK_"):
+            return PullHistoryResult(
+                False,
+                detail="剪贴板未拿到聊天内容，请改用「导入上下文」",
+            )
+        if len(text) < 4:
+            return PullHistoryResult(False, detail="剪贴板内容过短")
+
+        log.info("pull: clipboard ok chars=%s", len(text))
+        return PullHistoryResult(True, text=text, detail=f"已复制 {len(text)} 字")
+    finally:
+        # 无论成败：只要上滑过，就帮用户滚回最新消息
+        if scrolled_up:
+            try:
+                _scroll_chat_to_latest(
+                    hwnd,
+                    msg_left=msg_left,
+                    scroll_steps=int(scroll_steps),
+                    on_progress=on_progress,
+                )
+            except Exception:
+                log.exception("pull: scroll back to latest failed")
