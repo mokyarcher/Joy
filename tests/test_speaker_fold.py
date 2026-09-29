@@ -19,6 +19,11 @@ def test_nickname_looks():
     assert not looks_like_group_nickname("有静音车厢")
     assert not looks_like_group_nickname("@Moky")
     assert not looks_like_group_nickname("卧槽")
+    # 短聊正文：金额 / 动宾，绝不能当昵称再幻觉成 [表情]
+    assert not looks_like_group_nickname("15块钱")
+    assert not looks_like_group_nickname("3块")
+    assert not looks_like_group_nickname("100元")
+    assert not looks_like_group_nickname("剪头发")
 
 
 def test_fold_plain_text_group_no_forced_emoji():
@@ -85,12 +90,26 @@ def test_fold_long_nicks_longcat_thread():
     assert out[1].name == "LongCat小助手-布丁@美团"
     assert out[1].text.startswith("@所有人")
     assert out[2].name == "LongCat小助手-布丁@美团"
-    assert out[-1].name == "一帆风顺" and out[-1].text == "[表情]"
-    assert all(m.text not in {"洒家肉山大魔王", "一帆风顺"} for m in out)
+    # 未确认发言人的尾部短串：保留原文，禁止幻觉 [表情]
+    assert out[-1].text == "一帆风顺" and not out[-1].name
+    assert all(m.text != "[表情]" for m in out)
+    assert all(m.text not in {"洒家肉山大魔王"} for m in out)
 
 
-def test_orphan_yifan_nickname_becomes_emoji():
-    """纯表情气泡：只 OCR 到昵称「一帆风顺」→ 不能当正文。"""
+def test_confirmed_speaker_orphan_becomes_emoji():
+    """已确认发言人单独一行（贴纸漏识）→ name + [表情]。"""
+    raw = [
+        ChatMessage(side="other", text="这500w太耐用了，用了1个亿都还有220w", name="一帆风顺"),
+        ChatMessage(side="other", text="一帆风顺"),
+    ]
+    out = fold_speaker_name_messages(raw)
+    assert out[-1].name == "一帆风顺"
+    assert out[-1].text == "[表情]"
+    assert all(m.text != "一帆风顺" for m in out)
+
+
+def test_orphan_unconfirmed_keeps_text_no_emoji_hallucination():
+    """未确认的短串不能幻觉成 [表情]；回复侧仍禁复读昵称形态。"""
     from joy.core.message_noise import scrub_context_noise
     from joy.core.models import ScreenContext
     from joy.providers.reply_quality import echoes_peer_nickname, filter_candidates
@@ -101,9 +120,9 @@ def test_orphan_yifan_nickname_becomes_emoji():
         ChatMessage(side="other", text="一帆风顺"),
     ]
     out = fold_speaker_name_messages(raw)
-    assert out[-1].name == "一帆风顺"
-    assert out[-1].text == "[表情]"
-    assert all(m.text != "一帆风顺" for m in out)
+    assert out[-1].text == "一帆风顺"
+    assert out[-1].name is None
+    assert "[表情]" not in [m.text for m in out]
 
     ctx = scrub_context_noise(
         ScreenContext(title="群", messages=raw, source="ocr_local")
@@ -115,3 +134,25 @@ def test_orphan_yifan_nickname_becomes_emoji():
     kept = filter_candidates(bad, ctx)
     assert all(not (c.text or "").startswith("一帆风顺") for c in kept)
     assert echoes_peer_nickname("一帆风顺，这波稳", ctx)
+
+
+def test_short_chat_not_folded_to_emoji():
+    """群测：15块钱 / 剪头发 是正文，绝不能变成 [表情]。"""
+    from joy.providers.vision_parse import screen_context_from_dict
+
+    data = {
+        "title": "群",
+        "messages": [
+            {"side": "other", "text": "15块钱"},
+            {"side": "other", "name": "陈相", "text": "剪头发"},
+            {"side": "other", "name": "陈相", "text": "不亚于剃了个光头"},
+            {"side": "other", "name": "陈相", "text": "[图片: 粉色猫张嘴]"},
+        ],
+    }
+    ctx = screen_context_from_dict(data)
+    texts = [m.text for m in ctx.messages]
+    assert "15块钱" in texts
+    assert "剪头发" in texts
+    assert "不亚于剃了个光头" in texts
+    assert "[表情]" not in texts
+    assert any(m.name == "陈相" for m in ctx.messages)

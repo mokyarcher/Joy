@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -63,6 +64,18 @@ def _usage_brief(resp: Any) -> str:
     )
 
 
+def _looks_truncated_json(text: str) -> bool:
+    """粗判：像 JSON 但扫尾未闭合（模型早停常见）。"""
+    s = (text or "").strip()
+    if not s.startswith("{"):
+        return False
+    try:
+        json.loads(s)
+        return False
+    except Exception:
+        return True
+
+
 def parse_chat_image(
     cfg: JoyConfig,
     jpeg: bytes,
@@ -76,6 +89,8 @@ def parse_chat_image(
     prov = provider or resolve_vision(cfg)
     client = prov.client(timeout=120.0)
     data_url = jpeg_to_data_url(jpeg)
+    describe_images = bool(getattr(cfg.chat, "vision_describe_images", False))
+    system_prompt = build_vision_system(describe_images=describe_images)
     # SenseNova / DeepSeek V4：尽量关掉长思考，否则 max_tokens 全耗在 reasoning
     blob = f"{prov.preset or ''} {prov.model or ''}".lower()
     try_effort_none = "sensenova" in blob or "deepseek-v4" in blob or "deepseek-flash" in blob
@@ -86,14 +101,14 @@ def parse_chat_image(
         detail: str = "low",
         max_tokens: int = 2048,
         reasoning_effort: str | None = None,
-    ) -> tuple[str, str | None]:
+    ) -> tuple[str, str | None, str]:
         merged_hint = "\n".join(x for x in (emoji_hint.strip(), extra_hint.strip()) if x)
         user_text = VISION_USER + (f"\n{merged_hint}" if merged_hint else "")
         image_url: dict[str, Any] = {"url": data_url}
         if detail:
             image_url["detail"] = detail
         messages = [
-            {"role": "system", "content": build_vision_system()},
+            {"role": "system", "content": system_prompt},
             {
                 "role": "user",
                 "content": [
@@ -134,6 +149,28 @@ def parse_chat_image(
         resp = call_with_retry(_call, retries=2, label="vision")
         choice = resp.choices[0] if resp.choices else None
         text, reason = _choice_text(choice)
+        usage = _usage_brief(resp)
+        trunc = _looks_truncated_json(text)
+        # stop+半截 JSON ≠ 撞 max_tokens；length 才是上限
+        log.info(
+            "vision reply finish_reason=%s %s chars=%s max_tokens=%s truncated_json=%s",
+            reason or "?",
+            usage,
+            len(text or ""),
+            max_tokens,
+            trunc,
+        )
+        if trunc and reason == "stop":
+            log.warning(
+                "vision early-stop mid JSON (finish_reason=stop, not length) chars=%s",
+                len(text or ""),
+            )
+        elif reason == "length":
+            log.warning(
+                "vision hit max_tokens (finish_reason=length) chars=%s %s",
+                len(text or ""),
+                usage,
+            )
         if not (text or "").strip():
             msg = getattr(choice, "message", None) if choice else None
             keys = ""
@@ -146,10 +183,10 @@ def parse_chat_image(
             log.warning(
                 "vision empty content finish_reason=%s %s msg_keys=%s",
                 reason,
-                _usage_brief(resp),
+                usage,
                 keys or "-",
             )
-        return text, reason
+        return text, reason, usage
 
     def _parse_or_raise(raw: str, reason: str | None) -> dict:
         try:
@@ -160,8 +197,12 @@ def parse_chat_image(
             ) from exc
 
     effort = "none" if try_effort_none else None
+    # 简述图片时输出更长，给足 token；否则 1024 易在第 4 条截断
+    tok = 2048 if describe_images else 1024
     # 默认 detail=auto：low 时 deepseek-v4-flash 更容易忽略画面、照抄 prompt
-    raw, reason = _once(detail="auto", max_tokens=1024, reasoning_effort=effort)
+    raw, reason, usage = _once(
+        detail="auto", max_tokens=tok, reasoning_effort=effort
+    )
     try:
         data = _parse_or_raise(raw, reason)
         ctx = screen_context_from_dict(data)
@@ -172,15 +213,21 @@ def parse_chat_image(
             raise
         snippet = redact((raw or "").replace("\n", " ")[:180]) or "<empty>"
         log.warning(
-            "vision parse/echo retry: %s",
+            "vision parse/echo retry: finish_reason=%s %s | %s",
+            reason or "?",
+            usage,
             snippet
             if snippet != "<empty>"
             else f"<empty> finish_reason={reason}",
         )
-        raw, reason = _once(
-            "严禁输出「在吗」「在」等示例话。只抄截图里看得见的字。",
+        hint = (
+            "严禁输出「在吗」「在」等示例话。只抄截图里看得见的字。JSON 必须完整可解析。"
+            "若画面有照片/大图气泡，必须单独一条 text 为 [图片] 或 [图片:简述]，禁止漏掉。"
+        )
+        raw, reason, usage = _once(
+            hint,
             detail="high",
-            max_tokens=1024,
+            max_tokens=max(tok, 2048),
             reasoning_effort="none" if try_effort_none else None,
         )
         try:
@@ -191,12 +238,21 @@ def parse_chat_image(
         except ValueError:
             raise first_err from None
 
+    n_img = sum(
+        1
+        for m in ctx.messages
+        if (m.text or "").strip().startswith("[图片")
+    )
     log.info(
-        "vision ok preset=%s model=%s title=%s msgs=%s",
+        "vision ok preset=%s model=%s title=%s msgs=%s images=%s finish_reason=%s %s chars=%s",
         prov.preset,
         prov.model,
         ctx.title[:40],
         len(ctx.messages),
+        n_img,
+        reason or "?",
+        usage,
+        len(raw or ""),
     )
     return VisionResult(context=ctx, raw_text=raw, model=prov.model, preset=prov.preset)
 
@@ -222,10 +278,13 @@ def _is_bogus_contact_title(title: str) -> bool:
         "微信",
         "wechat",
         "weixin",
+        "小微",
         "...",
         "…",
     }
     if t in bad or low in bad:
+        return True
+    if "小微" in t or "AI 测试版" in t or "AI测试版" in t:
         return True
     # 整段都是 JSON 字段名口吻
     if t in {"title", "Title"} or t.startswith("title="):

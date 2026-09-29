@@ -119,6 +119,22 @@ def looks_like_group_nickname(text: str) -> bool:
     # @提及是气泡正文，不是发言人灰字昵称
     if t.startswith("@"):
         return False
+    # 金额/数量短句（「15块钱」「3块」「100元」）是聊天正文
+    if re.search(
+        r"\d+\s*(块钱|块|元|毛|角|万|亿|倍|斤|米|公里|分钟|小时|天|岁|个)",
+        t,
+    ):
+        return False
+    if re.fullmatch(r"\d+[块元万亿]?", t):
+        return False
+    # 常见动宾短聊（「剪头发」「吃饭了」已由虚词拦截；无虚词也要拦）
+    if re.fullmatch(
+        r"(剪|吃|喝|买|看|打|玩|睡|走|来|去|回|开|关|洗|刷|穿|脱|拿|放|发|收|"
+        r"写|读|听|唱|画|拍|录|传|下|上|点|选|换|修|装|卸|扫|拖|煮|炒|蒸)"
+        r"[\u4e00-\u9fff]{1,4}",
+        t,
+    ):
+        return False
     # 纯笑声/语气延长不是昵称（「哈哈哈哈哈」曾被误挂成 name）
     if re.fullmatch(r"[哈呵嘿嘻啊哦嗯欸诶]+", t):
         return False
@@ -153,6 +169,18 @@ def looks_like_group_nickname(text: str) -> bool:
     return bool(_NICK_RE.match(t))
 
 
+def _emit_orphan_speaker(pending: str, *, confirmed: set[str]) -> ChatMessage:
+    """昵称行后无正文。
+
+    仅当该串已确认为发言人时，才补 [表情]（真·贴纸漏识）；
+    否则保留原文，避免把「15块钱」等短聊幻觉成表情。
+    """
+    p = (pending or "").strip()
+    if p in confirmed:
+        return ChatMessage(side="other", text="[表情]", name=p)
+    return ChatMessage(side="other", text=p)
+
+
 def is_light_bubble_body(text: str) -> bool:
     """表情/贴纸/占位，可作为昵称后面的「正文」。"""
     t = (text or "").strip()
@@ -176,17 +204,20 @@ def fold_speaker_name_messages(messages: list[ChatMessage]) -> list[ChatMessage]
 
     OCR 常见：`陈相` / `热了我五个月` → 应为 other+name=陈相。
     短句「娘的」保留为正文；已识别过的昵称再次单独出现也折进去。
-    昵称后只有表情、或昵称单独一条（表情没 OCR 到）→ name=昵称 text=[表情]。
+    已确认发言人单独一行（贴纸漏识）→ name=昵称 text=[表情]；
+    未确认的短串保留原文，禁止幻觉 [表情]。
     """
     msgs = list(messages or [])
     if not msgs:
         return []
 
-    known: set[str] = set()
+    # 仅「已在 name 字段出现」或「后面确实挂了正文」的才算确认发言人
+    confirmed: set[str] = set()
     for m in msgs:
         if m.name and looks_like_group_nickname(m.name):
-            known.add(m.name.strip())
+            confirmed.add(m.name.strip())
 
+    known: set[str] = set(confirmed)
     # Pass1：昵称行 + 后续正文/表情 → 学昵称
     for i, m in enumerate(msgs):
         if m.side != "other":
@@ -208,6 +239,7 @@ def fold_speaker_name_messages(messages: list[ChatMessage]) -> list[ChatMessage]
                 or nt.startswith("@")
             ):
                 known.add(t)
+                confirmed.add(t)
             break
 
     out: list[ChatMessage] = []
@@ -220,44 +252,62 @@ def fold_speaker_name_messages(messages: list[ChatMessage]) -> list[ChatMessage]
             t in known or looks_like_group_nickname(t)
         ):
             if pending and not pending_used:
-                out.append(ChatMessage(side="other", text="[表情]", name=pending))
+                out.append(_emit_orphan_speaker(pending, confirmed=confirmed))
             pending = t
             pending_used = False
             known.add(t)
             continue
         if m.side == "other" and pending:
+            existing_name = (m.name or "").strip()
+            # 下一条已有 name 且与 pending 不同：pending 更像漏掉的正文，勿吞掉
+            if (
+                not pending_used
+                and existing_name
+                and existing_name != pending
+            ):
+                out.append(ChatMessage(side="other", text=pending))
+                out.append(m)
+                pending = None
+                pending_used = False
+                continue
             # 同一气泡被 OCR 拆多行：连续正文共用 pending，直到下一个昵称
             out.append(m.model_copy(update={"name": m.name or pending}))
             pending_used = True
             continue
         if m.side != "other":
             if pending and not pending_used:
-                out.append(ChatMessage(side="other", text="[表情]", name=pending))
+                out.append(_emit_orphan_speaker(pending, confirmed=confirmed))
             pending = None
             pending_used = False
         out.append(m)
 
-    # 尾部昵称后无正文：纯表情
+    # 尾部昵称后无正文
     if pending and not pending_used:
-        out.append(ChatMessage(side="other", text="[表情]", name=pending))
+        out.append(_emit_orphan_speaker(pending, confirmed=confirmed))
 
-    return repair_orphan_nickname_bodies(out)
+    return repair_orphan_nickname_bodies(out, confirmed=confirmed)
 
 
-def repair_orphan_nickname_bodies(messages: list[ChatMessage]) -> list[ChatMessage]:
-    """正文居然整句是群昵称/ID → 改成 name + [表情]，禁止当可回复文本。"""
+def repair_orphan_nickname_bodies(
+    messages: list[ChatMessage],
+    *,
+    confirmed: set[str] | None = None,
+) -> list[ChatMessage]:
+    """正文居然整句是群昵称/ID：确认发言人 → name+[表情]；否则保留原文。"""
+    conf = confirmed or set()
     out: list[ChatMessage] = []
     for m in messages or []:
         t = (m.text or "").strip()
         if m.side == "other" and t:
-            # vision 偶发 name 与 text 同为昵称
+            # vision 偶发 name 与 text 同为昵称（真贴纸）
             if m.name and t == (m.name or "").strip():
                 out.append(m.model_copy(update={"text": "[表情]"}))
                 continue
-            # 无 name，整句却是昵称形态（如「一帆风顺」）
-            if not m.name and looks_like_group_nickname(t):
+            # 无 name、整句却是已确认发言人
+            if not m.name and t in conf:
                 out.append(ChatMessage(side="other", text="[表情]", name=t))
                 continue
+            # 无 name、仅形态像昵称：保留原文（短聊不能幻觉成表情）
         out.append(m)
     return out
 

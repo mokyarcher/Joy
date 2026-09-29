@@ -1248,8 +1248,11 @@ def apply_emoji_matches_to_context(
         return ctx
 
     need = any(
-        (m.text or "").strip() in {"[表情]", "[动画表情]", "[贴纸]"}
-        or bool(re.fullmatch(r"(?:\[[^\[\]]{1,16}\]\s*)+", (m.text or "").strip() or ""))
+        (
+            (t := (m.text or "").strip()) in {"[表情]", "[动画表情]", "[贴纸]"}
+            or bool(re.fullmatch(r"(?:\[[^\[\]]{1,16}\]\s*)+", t or ""))
+        )
+        and not _is_image_bubble_text(t)
         for m in ctx.messages
     )
     if need:
@@ -1262,6 +1265,10 @@ def apply_emoji_matches_to_context(
         )
         for m in ctx.messages:
             t = (m.text or "").strip()
+            # 真实图片气泡不是表情占位，跳过且不消耗 Matcher 行
+            if _is_image_bubble_text(t):
+                new_msgs.append(m)
+                continue
             if uni_re.search(t) or (
                 re.search(r"[\u4e00-\u9fff]{2,}", t) and not tag_re.match(t)
             ):
@@ -1378,6 +1385,17 @@ def _merge_emoji_rows_by_y(
 
 
 _WECHAT_TAG_RE = re.compile(r"\[([^\[\]]{1,16})\]")
+_IMAGE_BUBBLE_RE = re.compile(r"^\[图片(?:[:：].{0,40})?\]$")
+
+
+def _is_image_bubble_text(text: str) -> bool:
+    """照片/大图气泡占位，禁止被 reconcile 降成 [表情]。"""
+    t = (text or "").strip()
+    if not t:
+        return False
+    if t == "[图片]" or t.startswith("[图片:") or t.startswith("[图片："):
+        return True
+    return bool(_IMAGE_BUBBLE_RE.match(t))
 
 
 def reconcile_vl_emoji_guesses(
@@ -1385,8 +1403,8 @@ def reconcile_vl_emoji_guesses(
 ) -> ScreenContext:
     """按「从上到下」把 Matcher 行对齐到表情气泡；同行多标签拼在一起。
 
-    Matcher 有命中时：多出来的 VL 纯表情气泡直接丢掉（常见是图片被当成表情）。
-    无命中时：已知微信标签降为 [表情]，留给上层兜底。
+    Matcher 有命中时：多出来的 VL 纯表情气泡直接丢掉（常见是贴纸被标成 [图片][嘿哈]）。
+    无命中时：已知微信表情名降为 [表情]；真正的 [图片]/[图片:简述] 必须保留。
     """
     from joy.core.wechat_emoji import is_known_code
 
@@ -1402,16 +1420,30 @@ def reconcile_vl_emoji_guesses(
             new_msgs.append(m)
             continue
 
+        # 纯图片气泡：保留描述，绝不能降成 [表情]
+        if _is_image_bubble_text(t):
+            new_msgs.append(m)
+            continue
+
+        # VL 常在贴纸前乱加 [图片] → 剥掉后再判表情
         t2 = re.sub(r"\[图片\]\s*", "", t).strip() or t
+        if _is_image_bubble_text(t2):
+            if t2 != t:
+                changed += 1
+                new_msgs.append(m.model_copy(update={"text": t2}))
+            else:
+                new_msgs.append(m)
+            continue
+
         only_tags = bool(re.fullmatch(r"(?:\[[^\[\]]{1,16}\]\s*)+", t2))
         parts = _WECHAT_TAG_RE.findall(t2)
         wechat_names = [
             n
             for n in parts
-            if is_known_code(n) and n not in {"表情", "动画表情", "贴纸"}
+            if is_known_code(n) and n not in {"表情", "动画表情", "贴纸", "图片"}
         ]
 
-        # 纯表情气泡（VL 常见：[图片][嘿哈] / [嘿哈] / [表情] / 一串标签）
+        # 纯表情气泡（VL 常见：[嘿哈] / [表情] / 一串标签）
         if only_tags or (
             wechat_names and not re.search(r"[\u4e00-\u9fffA-Za-z]{2,}", t2)
         ):
@@ -1428,7 +1460,7 @@ def reconcile_vl_emoji_guesses(
                 dropped += 1
                 changed += 1
             else:
-                # 无 Matcher：不信任 VL 点名，统一降为 [表情]
+                # 无 Matcher：不信任 VL 点名的具体表情，统一降为 [表情]
                 new_t = "[表情]"
                 if new_t != t:
                     changed += 1
@@ -1441,7 +1473,7 @@ def reconcile_vl_emoji_guesses(
         if wechat_names:
             def _repl(mo: re.Match[str]) -> str:
                 name = mo.group(1)
-                if name in {"表情", "动画表情", "贴纸"}:
+                if name in {"表情", "动画表情", "贴纸", "图片"}:
                     return mo.group(0)
                 if is_known_code(name):
                     return ""

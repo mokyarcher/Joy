@@ -91,9 +91,61 @@ def test_reconcile_strips_vl_heha_guess():
             ChatMessage(side="other", text="[嘿哈]"),
         ],
     )
-    # 无命中 → 全降为 [表情]
+    # 无命中 → 贴纸前缀剥掉后降为 [表情]
     out = reconcile_vl_emoji_guesses(ctx, hits=[])
     assert all(m.text == "[表情]" for m in out.messages), [m.text for m in out.messages]
+
+
+def test_reconcile_keeps_real_image_bubbles():
+    """识图产出的 [图片]/[图片:简述] 在无 Matcher 命中时必须保留，不能降成 [表情]。"""
+    from joy.capture.emoji_match import reconcile_vl_emoji_guesses
+
+    ctx = ScreenContext(
+        title="Moky",
+        messages=[
+            ChatMessage(side="other", text="[图片]"),
+            ChatMessage(side="other", text="[图片:一只橘猫趴在窗台]"),
+            ChatMessage(side="other", text="[图片：海边日落]"),
+            ChatMessage(side="other", text="[嘿哈]"),
+        ],
+    )
+    out = reconcile_vl_emoji_guesses(ctx, hits=[])
+    texts = [m.text for m in out.messages]
+    assert texts == [
+        "[图片]",
+        "[图片:一只橘猫趴在窗台]",
+        "[图片：海边日落]",
+        "[表情]",
+    ], texts
+
+
+def test_apply_keeps_image_when_emoji_hits_exist():
+    """同屏既有图片又有表情命中时，不能把 [图片:…] 换成 Matcher 标签。"""
+    from joy.capture.emoji_match import apply_emoji_matches_to_context
+
+    ctx = ScreenContext(
+        title="Moky",
+        messages=[
+            ChatMessage(side="other", text="[图片:窗外风景]"),
+            ChatMessage(side="other", text="[表情]"),
+        ],
+    )
+    hits = [
+        EmojiHit(
+            code="嘿哈",
+            score=0.95,
+            y=0.7,
+            x=0.4,
+            w=30,
+            h=30,
+            confidence="high",
+            margin=0.2,
+        )
+    ]
+    out = apply_emoji_matches_to_context(ctx, hits)
+    texts = [m.text for m in out.messages]
+    assert texts[0] == "[图片:窗外风景]", texts
+    assert texts[1] == "[嘿哈]", texts
 
 
 def test_reconcile_orders_hits_not_global_set():
