@@ -26,6 +26,24 @@ _WECHAT_EXE = {"weixin.exe", "wechat.exe", "wechatapp.exe"}
 _WECHAT_TITLE_HINTS = ("微信", "WeChat", "Weixin")
 # 主窗类名启发式（微信 4.x Qt）
 _WECHAT_MAIN_CLASS_HINTS = ("qt5", "qt6", "wechatmain", "weixin")
+# 独立附属窗：启动时绝不能选中 / Show，否则会「带出小微」等
+_WECHAT_SATELLITE_TITLES = frozenset(
+    {
+        "小微",
+        "朋友圈",
+        "搜一搜",
+        "视频号",
+        "看一看",
+        "直播",
+        "微信游戏",
+        "微信电脑端",
+    }
+)
+_WECHAT_SATELLITE_SUBSTR = (
+    "小微",
+    "AI 测试版",
+    "AI测试版",
+)
 
 
 def hwnd_dpi_scale(hwnd: int) -> float | None:
@@ -82,6 +100,18 @@ def _window_size(hwnd: int) -> tuple[int, int]:
         return 0, 0
 
 
+def is_wechat_satellite_title(title: str) -> bool:
+    """小微 / 朋友圈等附属窗标题，不能当主聊天窗。"""
+    t = (title or "").strip()
+    if not t:
+        return True
+    if t in _WECHAT_SATELLITE_TITLES:
+        return True
+    if any(s in t for s in _WECHAT_SATELLITE_SUBSTR):
+        return True
+    return False
+
+
 def is_capture_candidate(hwnd: int, class_name: str, title: str) -> bool:
     """过滤托盘气泡、极小窗、无标题工具窗。"""
     cls = (class_name or "").lower()
@@ -95,6 +125,8 @@ def is_capture_candidate(hwnd: int, class_name: str, title: str) -> bool:
     if w < 200 or h < 200:
         return False
     if not (title or "").strip():
+        return False
+    if is_wechat_satellite_title(title):
         return False
     return True
 
@@ -140,7 +172,7 @@ def _is_wechat_process(exe: str, title: str, class_name: str = "") -> bool:
 def _wechat_score(w: WindowInfo) -> tuple[int, int, int]:
     """越高越像主聊天窗。"""
     cls = w.class_name.lower()
-    title = w.title
+    title = (w.title or "").strip()
     ww, hh = _window_size(w.hwnd)
     area = ww * hh
     score = 0
@@ -148,26 +180,72 @@ def _wechat_score(w: WindowInfo) -> tuple[int, int, int]:
         score += 50
     if title in ("微信", "WeChat", "Weixin") or title.startswith("微信"):
         score += 30
+    elif title and not is_wechat_satellite_title(title):
+        # 会话名标题（正在聊天）也是主窗强特征
+        score += 25
     if w.exe_name.lower() in _WECHAT_EXE:
         score += 20
     if "tray" in cls or "messagewindow" in cls:
         score -= 100
+    if is_wechat_satellite_title(title):
+        score -= 200
+    # 偏手机比例的窄窗（小微常见）大幅降权
+    if ww > 0 and hh > 0 and ww < 560 and (ww / float(hh)) < 0.72:
+        score -= 80
+    if ww < 480:
+        score -= 30
     return (score, area, ww)
 
 
+def _accept_wechat_hwnd(
+    hwnd: int,
+    title: str,
+    class_name: str,
+    *,
+    iconic: bool,
+) -> bool:
+    """微信进程顶层窗是否可作为采集主窗。"""
+    cls = (class_name or "").lower()
+    if cls in _EXCLUDE_CLASS_EXACT or any(s in cls for s in _EXCLUDE_CLASS_SUBSTR):
+        return False
+    if "wxtrayicon" in cls:
+        return False
+    # 无标题：空白壳 / 过渡窗，选中后 Show 会「凭空弹出」
+    if not (title or "").strip():
+        return False
+    if is_wechat_satellite_title(title):
+        return False
+    ww, hh = _window_size(hwnd)
+    if not iconic and (ww < 200 or hh < 200):
+        return False
+    return True
+
+
+def has_wechat_window(windows: list[WindowInfo] | None = None) -> bool:
+    """当前是否有可用的微信主聊天窗（含最小化；不含小微等附属窗）。"""
+    return bool(find_wechat_windows(windows))
+
+
 def find_wechat_windows(windows: list[WindowInfo] | None = None) -> list[WindowInfo]:
-    """只返回微信相关可采集窗（含最小化主窗）；不含其它应用。"""
+    """只返回微信主聊天相关可采集窗；不含小微等附属窗。"""
     if windows is not None:
-        matched = [w for w in windows if _is_wechat_process(w.exe_name, w.title, w.class_name)]
-        matched = [w for w in matched if is_capture_candidate(w.hwnd, w.class_name, w.title)
-                   or (w.exe_name.lower() in _WECHAT_EXE)]
+        matched = [
+            w
+            for w in windows
+            if _is_wechat_process(w.exe_name, w.title, w.class_name)
+            and _accept_wechat_hwnd(
+                w.hwnd,
+                w.title,
+                w.class_name,
+                iconic=is_minimized(w.hwnd),
+            )
+        ]
         matched.sort(key=_wechat_score, reverse=True)
         return matched
 
     matched: list[WindowInfo] = []
 
     def _cb(hwnd: int, _: object) -> bool:
-        # 含最小化：IsWindowVisible 对 iconic 仍可能为 True；再放宽尺寸给微信进程
         title = win32gui.GetWindowText(hwnd) or ""
         try:
             class_name = win32gui.GetClassName(hwnd)
@@ -177,26 +255,17 @@ def find_wechat_windows(windows: list[WindowInfo] | None = None) -> list[WindowI
         exe = _exe_name(int(pid))
         if not _is_wechat_process(exe, title, class_name):
             return True
-        cls = (class_name or "").lower()
-        if cls in _EXCLUDE_CLASS_EXACT or any(s in cls for s in _EXCLUDE_CLASS_SUBSTR):
-            return True
-        if "wxtrayicon" in cls:
-            return True
-        # 微信主窗：允许最小化（尺寸可能异常）；仍排除极小工具窗
-        ww, hh = _window_size(hwnd)
         iconic = False
         try:
             iconic = bool(win32gui.IsIconic(hwnd))
         except Exception:
             pass
-        if not iconic and (ww < 200 or hh < 200):
-            return True
-        if not (title or "").strip() and not iconic:
+        if not _accept_wechat_hwnd(hwnd, title, class_name, iconic=iconic):
             return True
         matched.append(
             WindowInfo(
                 hwnd=int(hwnd),
-                title=title or "微信",
+                title=title,
                 class_name=class_name,
                 pid=int(pid),
                 exe_name=exe,
@@ -252,25 +321,40 @@ def _dwm_visible_rect(hwnd: int) -> tuple[int, int, int, int] | None:
 
 
 def window_screen_rect(hwnd: int) -> tuple[int, int, int, int] | None:
-    """窗口外框屏幕坐标 (left, top, right, bottom)，物理像素。最小化/无效时返回 None。
+    """窗口外框屏幕坐标 (left, top, right, bottom)。最小化/无效时返回 None。
 
-    优先用 DWM 可见外框：GetWindowRect 在 Win10/11 会多出一层不可见边，
-    按它贴边会在微信与侧窗之间留出明显黑缝。
+    优先 DWM 可见外框（少黑缝）；若 DWM 明显比 GetWindowRect 更矮/更窄，
+    改用 GetWindowRect（Qt 微信偶发 DWM 半高，日志 wechat_h=380）。
     """
     try:
         if not win32gui.IsWindow(hwnd):
             return None
         if win32gui.IsIconic(hwnd):
             return None
-        bounds = _dwm_visible_rect(hwnd)
-        if bounds is None:
+        dwm = _dwm_visible_rect(hwnd)
+        try:
             left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-            bounds = int(left), int(top), int(right), int(bottom)
+            gwr = int(left), int(top), int(right), int(bottom)
+        except Exception:
+            gwr = None
+
+        bounds = dwm
+        if dwm is not None and gwr is not None:
+            dwm_w, dwm_h = dwm[2] - dwm[0], dwm[3] - dwm[1]
+            gwr_w, gwr_h = gwr[2] - gwr[0], gwr[3] - gwr[1]
+            # DWM 明显缩水 → 信 GetWindowRect
+            if gwr_h >= 240 and dwm_h < int(gwr_h * 0.85):
+                bounds = gwr
+            elif gwr_w >= 240 and dwm_w < int(gwr_w * 0.85):
+                bounds = gwr
+        elif bounds is None:
+            bounds = gwr
+        if bounds is None:
+            return None
         left, top, right, bottom = bounds
         if left < -10000 or top < -10000:
             return None
         w, h = right - left, bottom - top
-        # 过小或离谱尺寸不能用于贴边（最小化残留矩形等）
         if w < 200 or h < 200:
             return None
         return int(left), int(top), int(right), int(bottom)
@@ -336,13 +420,15 @@ def compute_dock_beside(
     gap: int = 0,
     work: tuple[int, int, int, int] | None = None,
     min_w: int = 280,
+    anchor_rect: tuple[int, int, int, int] | None = None,
 ) -> tuple[int, int, int, int] | None:
     """
     贴锚点窗右侧（不够则左侧）；高度默认与锚点同高。
     坐标与 work 同单位（调用方保证物理或逻辑一致）。
+    anchor_rect 可传入已校正外框，避免内部再读半尺寸 DWM。
     返回 (x, y, w, h)。
     """
-    rect = window_screen_rect(anchor_hwnd)
+    rect = anchor_rect if anchor_rect is not None else window_screen_rect(anchor_hwnd)
     if rect is None:
         return None
     al, at, ar, ab = rect
@@ -428,7 +514,11 @@ def is_minimized(hwnd: int) -> bool:
 
 
 def is_hwnd_foreground(hwnd: int) -> bool:
-    """hwnd / 其子窗 / 同进程顶层窗 是否为前台（任务栏点回微信时为 True）。"""
+    """目标主窗或其子控件是否为前台。
+
+    注意：不能把「同进程任意顶层窗」算作主窗在前——小微也是 Weixin.exe，
+    否则侧窗会跟着小微跑，甚至反过来把它抬起来。
+    """
     try:
         if not hwnd or not win32gui.IsWindow(hwnd):
             return False
@@ -448,34 +538,28 @@ def is_hwnd_foreground(hwnd: int) -> bool:
                 return True
         except Exception:
             pass
-        # 微信多顶层窗：前台属于同一进程也算「微信在前」
-        try:
-            _tid_t, pid_t = win32process.GetWindowThreadProcessId(hwnd)
-            _tid_f, pid_f = win32process.GetWindowThreadProcessId(fg)
-            if pid_t and pid_t == pid_f:
-                return True
-        except Exception:
-            pass
         return False
     except Exception:
         return False
 
 
 def restore_window(hwnd: int) -> bool:
-    """若最小化则还原；成功返回 True。"""
+    """若最小化 / 移出屏幕则还原。
+
+    不要对已可见窗无条件 SW_SHOW：会把微信隐藏的附属壳（空标题/小微）亮出来。
+    """
     try:
         if not win32gui.IsWindow(hwnd):
             return False
         if win32gui.IsIconic(hwnd):
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        else:
-            try:
-                left, top, _, _ = win32gui.GetWindowRect(hwnd)
-                if left < -10000 or top < -10000:
-                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            except Exception:
+            return not is_minimized(hwnd)
+        try:
+            left, top, _, _ = win32gui.GetWindowRect(hwnd)
+            if left < -10000 or top < -10000:
                 win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        win32gui.ShowWindow(hwnd, win32con.SW_SHOW)
+        except Exception:
+            pass
         return not is_minimized(hwnd)
     except Exception:
         return False
@@ -553,7 +637,7 @@ def is_window_unoccluded(hwnd: int) -> bool:
 
 
 def ensure_wechat_hwnd(window: WindowInfo) -> str | None:
-    """确认 hwnd 仍是微信；异常时返回中文原因，OK 返回 None。"""
+    """确认 hwnd 仍是微信主聊天窗；异常时返回中文原因，OK 返回 None。"""
     try:
         if not win32gui.IsWindow(window.hwnd):
             return "窗口句柄已失效，请点「刷新」"
@@ -562,6 +646,8 @@ def ensure_wechat_hwnd(window: WindowInfo) -> str | None:
         title = win32gui.GetWindowText(window.hwnd) or window.title or ""
         if not _is_wechat_process(exe, title):
             return f"目标已不是微信（{exe or title or '?'}），请点「刷新」"
+        if is_wechat_satellite_title(title):
+            return f"目标是附属窗（{title or '无标题'}），请点「刷新」选主界面"
         return None
     except Exception:
         return "无法校验窗口，请点「刷新」"
