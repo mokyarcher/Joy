@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Joy 看屏副驾 — 下载</title>
+  <meta name="description" content="Joy 看屏副驾：贴在微信旁的识图回复助手。下载 Windows 版。" />
+  <link rel="icon" href="assets/joy.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green: #07c160;
+      --green-deep: #05964a;
+      --ink: #0f1419;
+      --muted: #5b6570;
+      --paper: #f4f7f5;
+      --line: rgba(15, 20, 25, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Noto Sans SC", system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 12% -10%, rgba(7, 193, 96, 0.22), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(7, 193, 96, 0.10), transparent 50%),
+        linear-gradient(165deg, #eef6f1 0%, var(--paper) 45%, #e8eee9 100%);
+      min-height: 100vh;
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      padding: clamp(24px, 5vw, 56px);
+    }
+
+    .hero {
+      max-width: 720px;
+      margin: auto 0;
+      animation: rise 0.7s ease-out both;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .brand img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(7, 193, 96, 0.28);
+      animation: pop 0.8s cubic-bezier(.2, .9, .2, 1.2) both;
+    }
+
+    .brand-name {
+      font-family: Outfit, "Noto Sans SC", sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.4rem, 7vw, 3.6rem);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    h1 {
+      font-family: Outfit, "Noto Sans SC", sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.35rem, 3.4vw, 1.85rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 12px;
+      max-width: 18em;
+    }
+
+    .lead {
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      max-width: 28em;
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font: 700 1rem/1 "Noto Sans SC", sans-serif;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(180deg, var(--green), var(--green-deep));
+      box-shadow: 0 12px 28px rgba(7, 193, 96, 0.32);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 34px rgba(7, 193, 96, 0.4);
+    }
+
+    .btn-ghost {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.85); }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .meta strong { color: var(--ink); font-weight: 600; }
+
+    footer {
+      padding-top: 40px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--line);
+      animation: rise 0.9s ease-out 0.1s both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: scale(0.86); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 560px) {
+      .brand img { width: 48px; height: 48px; }
+      .cta { flex-direction: column; align-items: stretch; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <main class="hero">
+      <div class="brand">
+        <img src="assets/joy.png" width="56" height="56" alt="" />
+        <div class="brand-name">Joy</div>
+      </div>
+      <h1>看屏副驾，贴在微信旁边</h1>
+      <p class="lead">识图理解当前会话，给出可点选的回复候选。Windows 单文件，下完即用。</p>
+      <div class="cta">
+        <a class="btn btn-primary" id="downloadBtn" href="#">下载 Windows 版</a>
+        <a class="btn btn-ghost" href="api/latest.json" target="_blank" rel="noopener">版本信息</a>
+      </div>
+      <p class="meta" id="meta">正在读取版本…</p>
+    </main>
+    <footer>
+      Joy 看屏副驾 · 本站仅托管安装包与更新清单 · 配置与聊天记忆保存在你的电脑本地
+    </footer>
+  </div>
+  <script>
+    async function boot() {
+      const meta = document.getElementById("meta");
+      const btn = document.getElementById("downloadBtn");
+      try {
+        const res = await fetch("api/latest.json", { cache: "no-store" });
+        if (!res.ok) throw new Error("bad status");
+        const data = await res.json();
+        const ver = data.version || "?";
+        const notes = (data.changelog || "").trim();
+        meta.innerHTML =
+          "当前版本 <strong>v" + ver + "</strong>" +
+          (data.size_mb ? " · 约 " + data.size_mb + " MB" : "") +
+          (notes ? "<br>" + notes.replace(/</g, "&lt;") : "");
+        if (data.url) {
+          btn.href = data.url;
+          btn.setAttribute("download", "");
+        } else {
+          btn.textContent = "暂无下载包";
+          btn.removeAttribute("href");
+        }
+      } catch (e) {
+        meta.textContent = "暂时读不到版本信息，请稍后再试或联系发布方。";
+        btn.textContent = "下载不可用";
+        btn.removeAttribute("href");
+      }
+    }
+    boot();
+  </script>
+</body>
+</html>

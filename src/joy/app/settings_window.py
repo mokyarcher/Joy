@@ -7,16 +7,19 @@ import sys
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QProcess, Qt, QThread, QTimer, Signal
+from PySide6.QtCore import QPoint, QProcess, Qt, QThread, QTimer, QUrl, Signal
 from PySide6.QtGui import (
     QAction,
     QColor,
+    QDesktopServices,
     QFont,
     QIcon,
     QKeySequence,
     QPainter,
     QPixmap,
     QPolygon,
+    QStandardItem,
+    QStandardItemModel,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -50,6 +53,52 @@ from joy.core.config import JoyConfig, ProviderSlotConfig, get_api_key
 from joy.core.secrets import save_user_env_batch
 from joy.app.toggle_switch import ToggleSwitch
 from joy.providers.presets import TEXT_PRESETS, VISION_PRESETS, resolve_endpoint
+from joy.util.update import (
+    DEFAULT_UPDATE_URL,
+    UpdateInfo,
+    check_for_update,
+    current_version,
+    download_update,
+    is_frozen,
+    launch_apply_and_exit,
+    needs_force,
+)
+
+
+class _UpdateCheckWorker(QThread):
+    finished_ok = Signal(object)  # UpdateInfo | None
+    finished_err = Signal(str)
+
+    def __init__(self, update_url: str, parent=None) -> None:
+        super().__init__(parent)
+        self._url = update_url
+
+    def run(self) -> None:
+        try:
+            info = check_for_update(update_url=self._url)
+            self.finished_ok.emit(info)
+        except Exception as exc:
+            self.finished_err.emit(str(exc))
+
+
+class _UpdateDownloadWorker(QThread):
+    progress = Signal(int, int)
+    finished_ok = Signal(object)  # Path
+    finished_err = Signal(str)
+
+    def __init__(self, info: UpdateInfo, parent=None) -> None:
+        super().__init__(parent)
+        self._info = info
+
+    def run(self) -> None:
+        try:
+            path = download_update(
+                self._info,
+                progress=lambda r, t: self.progress.emit(int(r), int(t)),
+            )
+            self.finished_ok.emit(path)
+        except Exception as exc:
+            self.finished_err.emit(str(exc))
 
 
 def _combo_arrow_url() -> str:
@@ -441,20 +490,10 @@ def _providers_look_shared(cfg: JoyConfig) -> bool:
 
 
 def _make_tray_icon() -> QIcon:
-    """绿色圆点 + J，无外部 ico 资源。"""
-    pm = QPixmap(64, 64)
-    pm.fill(QColor(0, 0, 0, 0))
-    p = QPainter(pm)
-    p.setRenderHint(QPainter.RenderHint.Antialiasing)
-    p.setBrush(QColor("#07C160"))
-    p.setPen(Qt.PenStyle.NoPen)
-    p.drawEllipse(4, 4, 56, 56)
-    p.setPen(QColor("#FFFFFF"))
-    f = QFont("Segoe UI", 24, QFont.Weight.Bold)
-    p.setFont(f)
-    p.drawText(pm.rect(), int(Qt.AlignmentFlag.AlignCenter), "J")
-    p.end()
-    return QIcon(pm)
+    """托盘 / 窗口图标：绿底看屏侧窗标。"""
+    from joy.app.branding import load_app_icon
+
+    return load_app_icon()
 
 
 class SettingsWindow(QWidget):
@@ -500,8 +539,12 @@ class SettingsWindow(QWidget):
         self._preview: QWidget | None = None
         self._ping_worker: _PingWorker | None = None
         self._tray: QSystemTrayIcon | None = None
+        self._update_check: _UpdateCheckWorker | None = None
+        self._update_dl: _UpdateDownloadWorker | None = None
+        self._pending_update: UpdateInfo | None = None
         self._sync_share_visibility()
         self._setup_tray()
+        self._refresh_version_label()
 
     def _wrap_in_scroll(self, inner: QWidget) -> QScrollArea:
         """设置页内容可滚动，避免塞进固定视窗被裁切。"""
@@ -738,6 +781,20 @@ class SettingsWindow(QWidget):
         send_lay.addWidget(self._hint("关闭后只填入微信，不会自动发送。"))
         lay.addWidget(send)
 
+        vision = QGroupBox("识图")
+        vision_lay = QVBoxLayout(vision)
+        vision_lay.setSpacing(8)
+        self.opt_describe_images = self._add_switch_row(
+            vision_lay,
+            "简述聊天图片内容",
+            checked=bool(getattr(self.cfg.chat, "vision_describe_images", False)),
+            tooltip="开：图片气泡记为 [图片: 简短描述]；关：只记 [图片]（默认，更快）",
+        )
+        vision_lay.addWidget(
+            self._hint("开启后识图略慢；描述可能偶发不准，仅供起草参考。")
+        )
+        lay.addWidget(vision)
+
         boot = QGroupBox("启动")
         boot_lay = QVBoxLayout(boot)
         boot_lay.setSpacing(8)
@@ -745,9 +802,35 @@ class SettingsWindow(QWidget):
             boot_lay,
             "启动时自动打开副驾",
             checked=bool(getattr(self.cfg.ui, "auto_open_preview", False)),
-            tooltip="已配置 API Key 时启动后自动打开副驾",
+            tooltip="已配置 API Key 且检测到微信窗口时，启动后自动打开副驾",
         )
-        boot_lay.addWidget(self._hint("需已配置 API Key，否则仍只打开本设置页。"))
+        boot_lay.addWidget(
+            self._hint("需已配置 API Key，且微信已打开；否则仍只打开本设置页。")
+        )
+        self.opt_check_update = self._add_switch_row(
+            boot_lay,
+            "启动时检查更新",
+            checked=bool(getattr(self.cfg.ui, "check_update_on_start", False)),
+            tooltip="联网读取 down.sharex.my 版本清单（仅打包版可自动替换）",
+        )
+        boot_lay.addWidget(self._hint("也可在「使用说明」页手动点检查更新。"))
+        mode_row = QHBoxLayout()
+        mode_row.addWidget(QLabel("默认打开"))
+        self.combo_display_mode = QComboBox()
+        self.combo_display_mode.addItem("侧窗模式", "dock")
+        self.combo_display_mode.addItem("大窗模式", "normal")
+        cur_mode = str(getattr(self.cfg.ui, "display_mode", "dock") or "dock").strip().lower()
+        if cur_mode not in ("dock", "normal"):
+            cur_mode = "dock"
+        idx = self.combo_display_mode.findData(cur_mode)
+        self.combo_display_mode.setCurrentIndex(idx if idx >= 0 else 0)
+        self.combo_display_mode.setToolTip("打开副驾时使用的窗口模式（菜单里仍可随时切换）")
+        mode_row.addWidget(self.combo_display_mode)
+        mode_row.addStretch(1)
+        boot_lay.addLayout(mode_row)
+        boot_lay.addWidget(
+            self._hint("系统默认侧窗；保存后下次打开副驾生效，也可立即应用到已打开的副驾。")
+        )
         lay.addWidget(boot)
 
         dock = QGroupBox("侧窗")
@@ -760,6 +843,7 @@ class SettingsWindow(QWidget):
             tooltip="开：最小化收起到微信顶部 △；关：进任务栏",
         )
         dock_lay.addWidget(self._hint("仅侧窗模式生效。"))
+        dock_lay.addWidget(self._build_dock_slot_picker())
         lay.addWidget(dock)
 
         drive = QGroupBox("驾驶 / 快捷键")
@@ -850,19 +934,38 @@ class SettingsWindow(QWidget):
 
             <h3>驾驶模式</h3>
             <ul>
-              <li><b>手动</b>：你点分析才跑</li>
-              <li><b>自动驾驶</b>：对面有新消息时自动出候选，<b>不自动发</b></li>
-              <li><b>智能驾驶</b>：出候选后短暂停留，自动发送首条</li>
-              <li><b>紧急制动</b>：立刻回手动，并中止进行中的分析</li>
+              <li><b>手动</b>：你点分析才跑（底栏状态灯为橙色）</li>
+              <li><b>自动驾驶</b>：对面有新消息时自动出候选，<b>不自动发</b>（绿灯）</li>
+              <li><b>智能驾驶</b>：出候选后短暂停留，自动发送首条（青色灯）</li>
+              <li><b>紧急制动</b>：立刻回手动，并中止进行中的分析（红电源灯，固定在发送左侧）</li>
             </ul>
-            <p class="muted">副驾底栏模式灯可点；快捷键默认 F1～F4，可在「设置」里改。</p>
+            <p class="muted">底栏驾驶灯可点循环切换；快捷键默认 F1～F4，可在「设置」里改。</p>
 
-            <h3>副驾</h3>
+            <h3>副驾窗口</h3>
             <ul>
-              <li><b>全视</b>：预览截图 + 操作 + 候选</li>
-              <li><b>侧窗</b>：贴在微信旁（优先右侧），跟微信移动；可收起为标题栏 △</li>
-              <li>右上角 <b>···</b>：分析 / 驾驶、上下文、重构布局、回到主界面、切换全视·侧窗</li>
+              <li><b>侧窗模式</b>（默认）：贴在微信旁，跟随移动；可收起为标题栏 △</li>
+              <li><b>大窗模式</b>：更大预览区，适合对照截图核对</li>
+              <li>「设置 · 启动 · 默认打开」可选侧窗 / 大窗；保存后打开副驾即用该模式</li>
               <li>点候选气泡 → 填入底栏；再点发送（是否回车看「设置 · 自动发送」）</li>
+            </ul>
+
+            <h3>底栏快捷</h3>
+            <ul>
+              <li>底栏为<strong>图标 only</strong>快捷槽：前 4 槽可在「设置 · 侧窗」里自选搭配</li>
+              <li>槽 5 <b>驾驶模式灯</b>、槽 6 <b>急停</b>固定，不可改</li>
+              <li>常用：手动分析、截屏预览、清理屏幕、对话详情等；悬停可看完整说明</li>
+            </ul>
+
+            <h3>··· 更多菜单</h3>
+            <ul>
+              <li><b>手动分析 / 自动驾驶 / 智能驾驶 / 紧急制动</b></li>
+              <li><b>清理屏幕</b>：清空对话详情与候选（不影响预览采集）</li>
+              <li><b>对话详情</b>：展开 / 收起解析后的对话详情</li>
+              <li><b>语境参数</b>：二级面板，含「上下文导入 / 上下文同步 / 上下文清除」</li>
+              <li><b>重构布局</b>：重新校准微信输入区位置（静默进行，无状态提示）</li>
+              <li><b>截屏预览</b>：侧窗显示 / 隐藏微信截屏预览带</li>
+              <li><b>大窗模式 / 侧窗模式</b>：随时切换窗口形态</li>
+              <li><b>回主界面</b>：回到本设置页</li>
             </ul>
 
             <h3>模型</h3>
@@ -879,12 +982,12 @@ class SettingsWindow(QWidget):
               <li>填入位置自动识别；偏了用副驾「重构布局」，或本页「重新校准微信布局」</li>
             </ul>
 
-            <h3>上下文记忆</h3>
+            <h3>语境参数（上下文记忆）</h3>
             <ul>
               <li>识图结果会写入当前联系人的本地记忆，供后续起草</li>
-              <li><b>导入上下文</b>：粘贴聊天记录</li>
-              <li><b>同步上下文</b>：先打开目标会话，再让副驾从微信拉取</li>
-              <li><b>清除上下文</b>：只清本地，不影响微信</li>
+              <li><b>上下文导入</b>：粘贴或从文件导入聊天记录</li>
+              <li><b>上下文同步</b>：先打开目标微信会话，再让副驾自动多选复制写入记忆</li>
+              <li><b>上下文清除</b>：只清 Joy 本地，不影响微信本身</li>
             </ul>
 
             <h3>安全</h3>
@@ -892,6 +995,19 @@ class SettingsWindow(QWidget):
               <li>API Key 只存本机环境变量，不进 <code>config.json</code></li>
               <li>不做支付 / 转账相关建议</li>
               <li>点 × 只收进托盘，不退出；托盘可打开设置、副驾，或退出 Joy</li>
+            </ul>
+
+            <h3>日志与反馈</h3>
+            <ul>
+              <li>运行日志写入本机 <code>~/.joy/logs/</code>（打包版无控制台时靠它排错）</li>
+              <li>只保留约<strong>最近 24 小时</strong>，按小时滚动覆盖；目录总大小约 10MB 封顶</li>
+              <li>反馈 bug 时可点下方「打开日志文件夹」，把最新 <code>joy.log</code> 一并发送</li>
+            </ul>
+
+            <h3>更新</h3>
+            <ul>
+              <li>打包版可点「检查更新」；有新版本会下载到本地后提示重启替换</li>
+              <li>下载站：<a href="https://down.sharex.my/">down.sharex.my</a></li>
             </ul>
             """
         )
@@ -902,15 +1018,214 @@ class SettingsWindow(QWidget):
         line.setStyleSheet("color:#E5E7EB;")
         lay.addWidget(line)
 
+        ver_row = QHBoxLayout()
+        self.lbl_version = QLabel("")
+        self.lbl_version.setStyleSheet("color:#6B7280;font-size:12px;")
+        ver_row.addWidget(self.lbl_version)
+        ver_row.addStretch(1)
+        lay.addLayout(ver_row)
+
+        tip = QLabel("动态指引：在副驾界面分步高亮关键控件（可跳过；不影响上方文字说明）。")
+        tip.setWordWrap(True)
+        tip.setStyleSheet("color:#9CA3AF;font-size:12px;")
+        lay.addWidget(tip)
+
         row = QHBoxLayout()
+        btn_guide = QPushButton("动态指引")
+        btn_guide.setObjectName("GhostBtn")
+        btn_guide.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_guide.setToolTip("打开副驾并分步高亮界面（使用说明正文不变）")
+        btn_guide.clicked.connect(self._start_dynamic_guide)
         btn_ep = QPushButton("查看当前端点")
         btn_ep.setObjectName("GhostBtn")
         btn_ep.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_ep.clicked.connect(self._show_endpoints)
+        btn_logs = QPushButton("打开日志文件夹")
+        btn_logs.setObjectName("GhostBtn")
+        btn_logs.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_logs.setToolTip("反馈问题时可附带其中的 joy.log")
+        btn_logs.clicked.connect(self._open_log_folder)
+        self.btn_check_update = QPushButton("检查更新")
+        self.btn_check_update.setObjectName("GhostBtn")
+        self.btn_check_update.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_check_update.clicked.connect(lambda: self.check_for_updates(silent=False))
+        row.addWidget(btn_guide)
         row.addWidget(btn_ep)
+        row.addWidget(btn_logs)
+        row.addWidget(self.btn_check_update)
         row.addStretch(1)
         lay.addLayout(row)
         return page
+
+    def _start_dynamic_guide(self) -> None:
+        """使用说明页入口：打开副驾并强制重看动态指引。"""
+        if not self._open_preview():
+            return
+        preview = self._preview
+        if preview is None:
+            return
+        start = getattr(preview, "start_coach_tour", None)
+        if not callable(start):
+            return
+        from PySide6.QtCore import QTimer
+
+        QTimer.singleShot(500, lambda: start(force=True))
+
+    def _refresh_version_label(self) -> None:
+        lbl = getattr(self, "lbl_version", None)
+        if lbl is None:
+            return
+        mode = "打包版" if is_frozen() else "源码运行"
+        lbl.setText(f"当前版本 v{current_version()} · {mode}")
+
+    def check_for_updates(self, *, silent: bool = False) -> None:
+        """检查更新；silent=True 时无新版本不弹窗。"""
+        if self._update_check is not None and self._update_check.isRunning():
+            if not silent:
+                QMessageBox.information(self, "检查更新", "正在检查，请稍候…")
+            return
+        if self._update_dl is not None and self._update_dl.isRunning():
+            if not silent:
+                QMessageBox.information(self, "检查更新", "正在下载更新，请稍候…")
+            return
+        btn = getattr(self, "btn_check_update", None)
+        if btn is not None:
+            btn.setEnabled(False)
+            btn.setText("检查中…")
+        worker = _UpdateCheckWorker(DEFAULT_UPDATE_URL, parent=self)
+        self._update_check = worker
+
+        def _ok(info: object) -> None:
+            if btn is not None:
+                btn.setEnabled(True)
+                btn.setText("检查更新")
+            if info is None:
+                if not silent:
+                    QMessageBox.information(
+                        self,
+                        "检查更新",
+                        f"已是最新版本（v{current_version()}）。",
+                    )
+                return
+            assert isinstance(info, UpdateInfo)
+            self._offer_update(info, silent=silent)
+
+        def _err(msg: str) -> None:
+            if btn is not None:
+                btn.setEnabled(True)
+                btn.setText("检查更新")
+            if not silent:
+                QMessageBox.warning(self, "检查更新失败", msg)
+
+        worker.finished_ok.connect(_ok)
+        worker.finished_err.connect(_err)
+        worker.start()
+
+    def _offer_update(self, info: UpdateInfo, *, silent: bool = False) -> None:
+        notes = (info.changelog or "").strip() or "（无更新说明）"
+        size = f"\n大小约 {info.size_mb:.0f} MB" if info.size_mb else ""
+        force = needs_force(info)
+        text = (
+            f"发现新版本 v{info.version}（当前 v{current_version()}）{size}\n\n"
+            f"{notes}\n\n"
+        )
+        if not is_frozen():
+            text += (
+                "当前为源码运行，无法自动替换 exe。\n"
+                "请打开下载站获取安装包，或重新打包后再用打包版更新。"
+            )
+            box = QMessageBox(self)
+            box.setWindowTitle("发现新版本")
+            box.setIcon(QMessageBox.Icon.Information)
+            box.setText(text)
+            open_btn = box.addButton("打开下载站", QMessageBox.ButtonRole.AcceptRole)
+            box.addButton("稍后", QMessageBox.ButtonRole.RejectRole)
+            box.exec()
+            if box.clickedButton() is open_btn:
+                QDesktopServices.openUrl(QUrl("https://down.sharex.my/"))
+            return
+
+        text += "下载完成后将自动退出并替换程序，然后重新启动。"
+        if force:
+            text = "【需要更新】\n\n" + text
+        box = QMessageBox(self)
+        box.setWindowTitle("发现新版本")
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setText(text)
+        dl_btn = box.addButton("下载并更新", QMessageBox.ButtonRole.AcceptRole)
+        later = None
+        if not force:
+            later = box.addButton("稍后", QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        if box.clickedButton() is dl_btn:
+            self._start_update_download(info)
+        elif force and later is None:
+            # 强制且用户关了对话框 → 仍提示一次
+            pass
+
+    def _start_update_download(self, info: UpdateInfo) -> None:
+        if self._update_dl is not None and self._update_dl.isRunning():
+            return
+        self._pending_update = info
+        btn = getattr(self, "btn_check_update", None)
+        if btn is not None:
+            btn.setEnabled(False)
+            btn.setText("下载中…")
+        worker = _UpdateDownloadWorker(info, parent=self)
+        self._update_dl = worker
+
+        def _prog(received: int, total: int) -> None:
+            if btn is None:
+                return
+            if total > 0:
+                pct = max(0, min(100, int(received * 100 / total)))
+                btn.setText(f"下载中 {pct}%")
+            else:
+                mb = received / (1024 * 1024)
+                btn.setText(f"下载中 {mb:.1f}MB")
+
+        def _ok(path: object) -> None:
+            if btn is not None:
+                btn.setEnabled(True)
+                btn.setText("检查更新")
+            from pathlib import Path as _P
+
+            p = _P(str(path))
+            reply = QMessageBox.question(
+                self,
+                "更新已就绪",
+                f"新版本已下载：\n{p}\n\n现在退出并替换为 v{info.version}？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes,
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
+            try:
+                launch_apply_and_exit(p)
+            except Exception as exc:
+                QMessageBox.warning(self, "无法应用更新", str(exc))
+
+        def _err(msg: str) -> None:
+            if btn is not None:
+                btn.setEnabled(True)
+                btn.setText("检查更新")
+            QMessageBox.warning(self, "下载失败", msg)
+
+        worker.progress.connect(_prog)
+        worker.finished_ok.connect(_ok)
+        worker.finished_err.connect(_err)
+        worker.start()
+
+    def _open_log_folder(self) -> None:
+        from joy.util.logging import default_log_dir
+
+        log_dir = default_log_dir()
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            QMessageBox.warning(self, "无法打开日志目录", str(exc))
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(log_dir)))
 
     def _refresh_layout_status(self) -> None:
         lbl = getattr(self, "layout_status", None)
@@ -959,9 +1274,34 @@ class SettingsWindow(QWidget):
 
         req(on_done=_done)
 
-    def _open_preview(self) -> None:
-        self._collect_all()
+    def _open_preview(self, *, silent: bool = False) -> bool:
+        """打开副驾。无微信主窗时不打开；silent=True 用于启动自动打开（只打日志）。"""
+        import logging
+
+        from joy.capture.windows import has_wechat_window
         from joy.app.preview_window import PreviewWindow
+
+        self._collect_all()
+
+        preview = self._preview
+        already_up = (
+            preview is not None
+            and preview.isVisible()
+            and not bool(getattr(preview, "_dock_collapsed", False))
+        )
+        # 新建 / 展开 / 重新显示前必须有微信；已在前台则只置顶
+        if not already_up and not has_wechat_window():
+            if silent:
+                logging.getLogger("joy.app").info(
+                    "跳过打开副驾：未检测到微信窗口"
+                )
+            else:
+                QMessageBox.information(
+                    self,
+                    "打开副驾",
+                    "未检测到微信窗口。\n\n请先打开微信，再点「打开副驾」。",
+                )
+            return False
 
         if self._preview is not None:
             # 侧窗可能被「收起」（隐藏 + △）；再开副驾应展开而非新建
@@ -981,7 +1321,7 @@ class SettingsWindow(QWidget):
                     sync()
                 self._preview.raise_()
             self._hide_to_tray()
-            return
+            return True
         self._preview = PreviewWindow(self.cfg)
         bind = getattr(self._preview, "bind_main_host", None)
         if callable(bind):
@@ -992,6 +1332,7 @@ class SettingsWindow(QWidget):
             self._preview.raise_()
         # 副驾打开后主设置窗收进系统托盘
         self._hide_to_tray()
+        return True
 
     def _setup_tray(self) -> None:
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -1129,16 +1470,196 @@ class SettingsWindow(QWidget):
         self.cfg.chat.context_messages = int(self.ctx_n.value())
         self.cfg.chat.memory_pull_scroll_steps = int(self.pull_scroll_n.value())
 
+    def _build_dock_slot_picker(self) -> QWidget:
+        """底栏 5 槽紧凑选择器；已被占用的动作在其它下拉里灰显。"""
+        from joy.core.dock_bar import (
+            DOCK_BAR_CHOICES,
+            DOCK_BAR_USER_SLOTS,
+            action_label,
+            action_short_label,
+            action_tip,
+            normalize_dock_bar_slots,
+        )
+
+        wrap = QFrame()
+        wrap.setObjectName("DockSlotPicker")
+        wrap.setStyleSheet(
+            """
+            QFrame#DockSlotPicker {
+                background: #F7F8FA;
+                border: 1px solid #E8EAEF;
+                border-radius: 8px;
+            }
+            QLabel#DockSlotTitle {
+                color: #374151;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            QLabel#DockSlotIdx {
+                color: #9CA3AF;
+                font-size: 10px;
+            }
+            QComboBox#DockSlotCombo {
+                min-height: 24px;
+                max-height: 26px;
+                min-width: 88px;
+                max-width: 110px;
+                padding: 1px 4px 1px 6px;
+                font-size: 12px;
+                border: 1px solid #E5E7EB;
+                border-radius: 6px;
+                background: #FFFFFF;
+                color: #1F2937;
+            }
+            QComboBox#DockSlotCombo:hover {
+                border-color: #07C160;
+            }
+            QComboBox#DockSlotCombo:focus {
+                border: 1px solid #07C160;
+            }
+            QComboBox#DockSlotCombo::drop-down {
+                width: 16px;
+                border: none;
+                background: transparent;
+            }
+            QComboBox#DockSlotCombo QAbstractItemView {
+                border: 1px solid #E5E7EB;
+                border-radius: 6px;
+                background: #FFFFFF;
+                selection-background-color: #EEF7F2;
+                selection-color: #07C160;
+                outline: 0;
+                font-size: 12px;
+                padding: 2px;
+            }
+            """
+        )
+        lay = QVBoxLayout(wrap)
+        lay.setContentsMargins(10, 8, 10, 8)
+        lay.setSpacing(6)
+
+        head = QHBoxLayout()
+        title = QLabel("底栏快捷 · 可配 4 槽")
+        title.setObjectName("DockSlotTitle")
+        head.addWidget(title)
+        head.addStretch(1)
+        note = QLabel("槽5 驾驶 · 槽6 急停 已锁定")
+        note.setStyleSheet("color:#9CA3AF;font-size:11px;")
+        head.addWidget(note)
+        lay.addLayout(head)
+
+        slots = normalize_dock_bar_slots(
+            getattr(self.cfg.ui, "dock_bar_slots", None)
+        )
+        self.dock_slot_combos: list[QComboBox] = []
+        row = QHBoxLayout()
+        row.setSpacing(6)
+        for i in range(DOCK_BAR_USER_SLOTS):
+            col = QVBoxLayout()
+            col.setSpacing(2)
+            col.setContentsMargins(0, 0, 0, 0)
+            idx_lab = QLabel(str(i + 1))
+            idx_lab.setObjectName("DockSlotIdx")
+            idx_lab.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            col.addWidget(idx_lab)
+
+            cb = QComboBox()
+            cb.setObjectName("DockSlotCombo")
+            model = QStandardItemModel(cb)
+            for aid in DOCK_BAR_CHOICES:
+                item = QStandardItem(action_short_label(aid))
+                item.setData(aid, Qt.ItemDataRole.UserRole)
+                item.setToolTip(f"{action_label(aid)}\n{action_tip(aid)}")
+                model.appendRow(item)
+            cb.setModel(model)
+            cb.setMaxVisibleItems(12)
+            if cb.view() is not None:
+                cb.view().setMinimumWidth(148)
+            aid0 = slots[i] if i < len(slots) else "empty"
+            idx = cb.findData(aid0, Qt.ItemDataRole.UserRole)
+            cb.setCurrentIndex(idx if idx >= 0 else 0)
+            cb.setToolTip(f"{action_label(aid0)}\n{action_tip(aid0)}")
+            cb.currentIndexChanged.connect(self._on_dock_slot_combo_changed)
+
+            def _make_popup(combo: QComboBox):
+                def _popup() -> None:
+                    self._refresh_dock_slot_choices_enabled()
+                    QComboBox.showPopup(combo)
+
+                return _popup
+
+            cb.showPopup = _make_popup(cb)  # type: ignore[method-assign]
+            self.dock_slot_combos.append(cb)
+            col.addWidget(cb)
+            row.addLayout(col)
+        row.addStretch(1)
+        lay.addLayout(row)
+        tip = QLabel("已占用的动作在其它槽中会灰显不可选；保存后副驾底栏立即更新。")
+        tip.setWordWrap(True)
+        tip.setStyleSheet("color:#9CA3AF;font-size:11px;")
+        lay.addWidget(tip)
+        self._refresh_dock_slot_choices_enabled()
+        return wrap
+
+    def _refresh_dock_slot_choices_enabled(self) -> None:
+        """其它槽已选中的动作 → 本槽下拉里灰显禁用（当前选中项除外）。"""
+        combos = getattr(self, "dock_slot_combos", None) or []
+        if not combos:
+            return
+        taken: set[str] = set()
+        currents: list[str] = []
+        for cb in combos:
+            aid = str(cb.currentData() or "empty")
+            currents.append(aid)
+            if aid and aid != "empty":
+                taken.add(aid)
+        for i, cb in enumerate(combos):
+            cur = currents[i]
+            model = cb.model()
+            if not isinstance(model, QStandardItemModel):
+                continue
+            for row in range(model.rowCount()):
+                item = model.item(row)
+                if item is None:
+                    continue
+                aid = str(item.data(Qt.ItemDataRole.UserRole) or "empty")
+                if aid == "empty" or aid == cur:
+                    item.setEnabled(True)
+                else:
+                    item.setEnabled(aid not in taken)
+            # 同步收起态 tooltip
+            cb.setToolTip(
+                str(model.item(cb.currentIndex()).toolTip() or "")
+                if cb.currentIndex() >= 0 and model.item(cb.currentIndex())
+                else ""
+            )
+
+    def _on_dock_slot_combo_changed(self, *_args) -> None:
+        self._refresh_dock_slot_choices_enabled()
+
     def _collect_prefs(self) -> None:
         self.cfg.chat.auto_send = self.opt_auto_send.isChecked()
         # 始终允许从副驾填入；是否回车由 auto_send 决定
         self.cfg.chat.allow_one_click_send = True
         self.cfg.chat.confirm_before_send = False
+        self.cfg.chat.vision_describe_images = bool(
+            getattr(self, "opt_describe_images", None)
+            and self.opt_describe_images.isChecked()
+        )
         # fill_click_* 由布局探测写入，设置页不再手改
         self.cfg.ui.auto_open_preview = self.opt_auto_open.isChecked()
+        self.cfg.ui.check_update_on_start = self.opt_check_update.isChecked()
         self.cfg.ui.auto_collapse_on_minimize = self.opt_auto_collapse.isChecked()
+        mode = str(self.combo_display_mode.currentData() or "dock").strip().lower()
+        self.cfg.ui.display_mode = "dock" if mode == "dock" else "normal"
         self.cfg.ui.smart_drive_delay_ms = int(self.spin_smart_delay.value())
         from joy.core.config import HotkeysConfig
+        from joy.core.dock_bar import normalize_dock_bar_slots
+
+        combos = getattr(self, "dock_slot_combos", None) or []
+        if combos:
+            raw = [str(cb.currentData() or "empty") for cb in combos]
+            self.cfg.ui.dock_bar_slots = normalize_dock_bar_slots(raw)
 
         def _seq(edit: QKeySequenceEdit, fallback: str) -> str:
             s = edit.keySequence().toString(QKeySequence.SequenceFormat.PortableText)
@@ -1177,6 +1698,19 @@ class SettingsWindow(QWidget):
             reload_hk = getattr(self._preview, "reload_hotkeys", None)
             if callable(reload_hk):
                 reload_hk()
+            apply_bar = getattr(self._preview, "apply_dock_bar_slots", None)
+            if callable(apply_bar):
+                apply_bar()
+            # 默认窗口模式：已打开副驾则按配置切换
+            want_dock = (
+                str(getattr(self.cfg.ui, "display_mode", "dock") or "dock").lower()
+                == "dock"
+            )
+            is_dock = bool(getattr(self._preview, "is_dock_mode", lambda: False)())
+            if want_dock != is_dock:
+                toggle = getattr(self._preview, "_toggle_display_mode", None)
+                if callable(toggle):
+                    toggle()
         QMessageBox.information(self, "Joy", "配置修改成功")
 
     def _save_model(self) -> None:
@@ -1238,18 +1772,39 @@ class SettingsWindow(QWidget):
 
     def _reset_prefs(self) -> None:
         from joy.core.config import ChatConfig, UiConfig
+        from joy.core.dock_bar import DEFAULT_DOCK_BAR_SLOTS
 
         chat_d = ChatConfig()
         ui_d = UiConfig()
         self.opt_auto_send.setChecked(bool(chat_d.auto_send))
+        if getattr(self, "opt_describe_images", None) is not None:
+            self.opt_describe_images.setChecked(
+                bool(getattr(chat_d, "vision_describe_images", False))
+            )
         self.opt_auto_open.setChecked(bool(ui_d.auto_open_preview))
+        self.opt_check_update.setChecked(bool(ui_d.check_update_on_start))
         self.opt_auto_collapse.setChecked(bool(ui_d.auto_collapse_on_minimize))
+        mode = str(ui_d.display_mode or "dock").strip().lower()
+        idx = self.combo_display_mode.findData(
+            "dock" if mode == "dock" else "normal"
+        )
+        self.combo_display_mode.setCurrentIndex(idx if idx >= 0 else 0)
         self.spin_smart_delay.setValue(int(ui_d.smart_drive_delay_ms))
         hk = ui_d.hotkeys
         self.hk_analyze.setKeySequence(QKeySequence(hk.manual_analyze or "F1"))
         self.hk_auto.setKeySequence(QKeySequence(hk.auto_drive or "F2"))
         self.hk_smart.setKeySequence(QKeySequence(hk.smart_drive or "F3"))
         self.hk_estop.setKeySequence(QKeySequence(hk.emergency_stop or "F4"))
+        for i, cb in enumerate(getattr(self, "dock_slot_combos", []) or []):
+            aid = (
+                DEFAULT_DOCK_BAR_SLOTS[i]
+                if i < len(DEFAULT_DOCK_BAR_SLOTS)
+                else "empty"
+            )
+            idx = cb.findData(aid)
+            cb.blockSignals(True)
+            cb.setCurrentIndex(idx if idx >= 0 else 0)
+            cb.blockSignals(False)
         QMessageBox.information(self, "Joy", "已恢复设置默认（尚未写入磁盘，请点保存配置）")
 
     def _show_endpoints(self) -> None:

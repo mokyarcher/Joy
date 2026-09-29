@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from joy.core.dock_bar import DEFAULT_DOCK_BAR_SLOTS, normalize_dock_bar_slots
+
 
 def default_config_path() -> Path:
     """优先项目根 config.json，否则用户目录。"""
@@ -56,6 +58,8 @@ class ChatConfig(BaseModel):
     memory_pull_scroll_steps: int = 24
     # 纯文字优先 OCR，跳过 Vision（有图/视频痕迹仍走 VLM）
     prefer_ocr_text_pipeline: bool = True
+    # 识图时是否简述图片气泡内容（默认关，只标 [图片]，更快更稳）
+    vision_describe_images: bool = False
 
     @model_validator(mode="after")
     def _coerce_presets(self) -> ChatConfig:
@@ -109,10 +113,14 @@ class HotkeysConfig(BaseModel):
 class UiConfig(BaseModel):
     check_update_on_start: bool = False
     confirm_vision_upload: bool = False
-    # normal = 完整预览；dock = 外挂小窗（贴微信右侧）
-    display_mode: Literal["normal", "dock"] = "normal"
+    # normal = 大窗；dock = 侧窗（贴微信右侧）。启动/打开副驾时用此默认
+    display_mode: Literal["normal", "dock"] = "dock"
     # 侧窗是否显示微信截图预览带（全视模式始终显示）
     dock_show_preview: bool = True
+    # 底栏可配槽（4 个）；槽 5=驾驶灯、槽 6=急停 固定。见 joy.core.dock_bar
+    dock_bar_slots: list[str] = Field(
+        default_factory=lambda: list(DEFAULT_DOCK_BAR_SLOTS)
+    )
     # 自动驾驶：本地监测画面变化 → 自动调 API 生成候选（不自动发送）
     auto_mode: bool = False
     # 智能驾驶：出候选后短暂停留，自动发送首条
@@ -128,7 +136,14 @@ class UiConfig(BaseModel):
     auto_open_preview: bool = False
     # 侧窗被最小化（用户点最小化 / 系统调度最小化）时，收起为微信标题栏 △
     auto_collapse_on_minimize: bool = True
+    # 副驾动态指引：走完或跳过后为 True；「使用说明」可强制重看
+    coach_tour_done: bool = False
     hotkeys: HotkeysConfig = Field(default_factory=HotkeysConfig)
+
+    @model_validator(mode="after")
+    def _normalize_dock_bar_slots(self) -> UiConfig:
+        self.dock_bar_slots = normalize_dock_bar_slots(self.dock_bar_slots)
+        return self
 
 
 class JoyConfig(BaseModel):

@@ -32,6 +32,7 @@ from PySide6.QtGui import (
     QImage,
     QKeySequence,
     QPainter,
+    QPainterPath,
     QPen,
     QPixmap,
     QPolygonF,
@@ -39,8 +40,6 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QDialog,
-    QDialogButtonBox,
-    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -85,6 +84,7 @@ from joy.core.wechat_layout import (
 from joy.fill import paste_and_send, paste_text
 from joy.app.toggle_switch import ToggleSwitch
 from joy.app.wechat_wake_button import DockCollapseButton, WeChatWakeButton
+from joy.util.dpi_win import dock_coord_scale, resolve_dock_anchor
 from joy.util.logging import redact
 
 log = logging.getLogger("joy.preview")
@@ -417,10 +417,38 @@ def _paint_line_icon(
     elif kind == "restore":
         p.drawRoundedRect(int(cx - 3), int(cy - 7), 11, 9, 1.5, 1.5)
         p.drawRoundedRect(int(cx - 8), int(cy - 3), 11, 9, 1.5, 1.5)
+    elif kind == "home":
+        # 小房子：屋顶 + 墙身 + 门
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.setPen(pen)
+        roof = QPolygonF(
+            [
+                QPointF(cx, cy - 7.2),
+                QPointF(cx + 7.0, cy - 0.8),
+                QPointF(cx - 7.0, cy - 0.8),
+            ]
+        )
+        p.drawPolygon(roof)
+        p.drawRoundedRect(QRectF(cx - 5.2, cy - 0.8, 10.4, 7.6), 1.0, 1.0)
+        p.drawRoundedRect(QRectF(cx - 1.6, cy + 2.2, 3.2, 4.6), 0.6, 0.6)
     elif kind == "clear":
-        p.drawRoundedRect(int(cx - 7), int(cy - 7), 14, 14, 2.5, 2.5)
-        p.drawLine(int(cx - 3), int(cy - 3), int(cx + 3), int(cy + 3))
-        p.drawLine(int(cx + 3), int(cy - 3), int(cx - 3), int(cy + 3))
+        # 扫把线稿：斜向空心；无顶饰、刷头完整无缺口
+        p.save()
+        p.translate(cx, cy)
+        p.rotate(-40)
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.setPen(pen)
+        # 柄
+        p.drawRoundedRect(QRectF(-1.65, -7.2, 3.3, 6.4), 1.5, 1.5)
+        # 刷身
+        p.drawRoundedRect(QRectF(-4.6, -1.5, 9.2, 3.6), 1.3, 1.3)
+        # 刷毛：完整矩形外轮廓
+        p.drawRoundedRect(QRectF(-5.2, 2.4, 10.4, 4.4), 1.0, 1.0)
+        # 刷毛内部分隔线
+        p.drawLine(QPointF(-2.6, 3.4), QPointF(-2.6, 5.8))
+        p.drawLine(QPointF(0.0, 3.4), QPointF(0.0, 5.8))
+        p.drawLine(QPointF(2.6, 3.4), QPointF(2.6, 5.8))
+        p.restore()
     elif kind == "mode":
         if mode_dock:
             s, g = 5.5, 3.0
@@ -442,15 +470,55 @@ def _paint_line_icon(
         for dx in (-6.2, 0, 6.2):
             p.drawEllipse(QPointF(cx + dx, cy), 1.35, 1.35)
     elif kind == "analyze":
-        # 手动：圆环 + 中心点 + 底弧（与驾驶灯手动同形）
-        p.drawEllipse(QPointF(cx, cy - 0.5), 6.2, 6.2)
+        # 文档 + 放大镜（解析动作；与驾驶状态灯造型脱钩）
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.setPen(pen)
+        # 纸张（右上折角）
+        sheet = QPainterPath()
+        sheet.moveTo(cx - 6.4, cy - 6.2)
+        sheet.lineTo(cx + 1.2, cy - 6.2)
+        sheet.lineTo(cx + 3.8, cy - 3.6)
+        sheet.lineTo(cx + 3.8, cy + 5.8)
+        sheet.lineTo(cx - 6.4, cy + 5.8)
+        sheet.closeSubpath()
+        p.drawPath(sheet)
+        # 折角线
+        p.drawLine(QPointF(cx + 1.2, cy - 6.2), QPointF(cx + 1.2, cy - 3.6))
+        p.drawLine(QPointF(cx + 1.2, cy - 3.6), QPointF(cx + 3.8, cy - 3.6))
+        # 文内两行 + 小数据块
+        p.drawLine(QPointF(cx - 4.6, cy - 3.4), QPointF(cx - 0.2, cy - 3.4))
+        p.drawLine(QPointF(cx - 4.6, cy - 1.4), QPointF(cx + 0.6, cy - 1.4))
         p.setBrush(color)
         p.setPen(Qt.PenStyle.NoPen)
-        p.drawEllipse(QPointF(cx, cy - 0.5), 2.0, 2.0)
+        p.drawRoundedRect(QRectF(cx - 4.6, cy + 0.6, 2.4, 1.8), 0.4, 0.4)
+        p.drawRoundedRect(QRectF(cx - 4.6, cy + 3.0, 2.4, 1.8), 0.4, 0.4)
         p.setPen(pen)
         p.setBrush(Qt.BrushStyle.NoBrush)
-        arc = QRectF(cx - 5.0, cy + 1.5, 10.0, 7.0)
-        p.drawArc(arc, int(30 * 16), int(120 * 16))
+        p.drawLine(QPointF(cx - 1.6, cy + 1.5), QPointF(cx + 1.6, cy + 1.5))
+        p.drawLine(QPointF(cx - 1.6, cy + 3.9), QPointF(cx + 1.6, cy + 3.9))
+        # 放大镜压住文档：镜内盖住表格线，再画镜框
+        lens = QPointF(cx + 3.6, cy + 3.2)
+        lens_r = 3.6
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor("#FFFFFF"))
+        p.drawEllipse(lens, lens_r + 0.2, lens_r + 0.2)
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.setPen(pen)
+        p.drawEllipse(lens, lens_r, lens_r)
+        p.setPen(
+            QPen(
+                color,
+                1.7,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+                Qt.PenJoinStyle.RoundJoin,
+            )
+        )
+        p.drawLine(
+            QPointF(cx + 6.0, cy + 5.6),
+            QPointF(cx + 7.8, cy + 7.4),
+        )
+        p.setPen(pen)
     elif kind == "auto":
         # 自动驾驶：双弧循环
         r = 6.5
@@ -542,6 +610,10 @@ def _paint_line_icon(
         p.drawRoundedRect(int(cx - 7), int(cy - 6), 14, 10, 1.5, 1.5)
         p.drawLine(int(cx - 3), int(cy + 5), int(cx + 3), int(cy + 5))
         p.drawLine(int(cx), int(cy + 5), int(cx), int(cy + 7))
+    elif kind == "context":
+        # 上下文：叠层卡片
+        p.drawRoundedRect(int(cx - 6), int(cy - 3), 12, 9, 1.5, 1.5)
+        p.drawRoundedRect(int(cx - 8), int(cy - 6), 12, 9, 1.5, 1.5)
 
 
 def _line_icon(
@@ -1048,15 +1120,16 @@ class DriveModeBadge(QWidget):
             p.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 7, 7)
 
         cx, cy = self.width() / 2.0, self.height() / 2.0
+        # 手动橙 / 自动绿 / 智驾青，便于和旁侧灰图标区分
+        manual_orange = QColor("#F59E0B")
         green = QColor("#00C375")
-        smart_blue = QColor(0, 130, 200)
-        mute = QColor(75, 75, 75)
+        smart_cyan = QColor(0, 180, 205)
         if self._mode == self.MODE_MANUAL:
-            self._paint_manual(p, cx, cy, mute)
+            self._paint_manual(p, cx, cy, manual_orange)
         elif self._mode == self.MODE_AUTO:
             self._paint_auto(p, cx, cy, green)
         else:
-            self._paint_smart(p, cx, cy, smart_blue)
+            self._paint_smart(p, cx, cy, smart_cyan)
         p.end()
 
     @staticmethod
@@ -1199,9 +1272,9 @@ class DetailBadge(QWidget):
 
     def _sync_tip(self) -> None:
         if self._active:
-            self.setToolTip("收起识别详情")
+            self.setToolTip("收起对话详情")
         else:
-            self.setToolTip("查看最近一次识别详情")
+            self.setToolTip("查看解析后的对话详情")
 
     def mousePressEvent(self, event) -> None:  # noqa: N802
         if event.button() == Qt.MouseButton.LeftButton:
@@ -1478,6 +1551,106 @@ class EStopBadge(QWidget):
         # 缺口 ±50° 绕正上方（90°）：140° → 140°+260°
         p.drawArc(ring, int(140 * 16), int(260 * 16))
         p.drawLine(QPointF(cx, cy - ring_r - 1.2), QPointF(cx, cy - 0.2))
+        p.end()
+
+
+class IconSlotBadge(QWidget):
+    """底栏可配槽：28×28 图标 only（与详情/驾驶/急停同壳）。"""
+
+    clicked = Signal()
+
+    def __init__(
+        self,
+        kind: str,
+        tip: str,
+        parent: QWidget | None = None,
+        *,
+        active: bool = False,
+    ) -> None:
+        super().__init__(parent)
+        self.setObjectName("IconSlotBadge")
+        self.setFixedSize(28, 28)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._kind = kind or "clear"
+        self._tip = tip or ""
+        self._active = bool(active)
+        self._pressed = False
+        self.setToolTip(self._tip)
+
+    def set_kind(self, kind: str, tip: str = "") -> None:
+        self._kind = kind or "clear"
+        if tip:
+            self._tip = tip
+            self.setToolTip(tip)
+        self.update()
+
+    def set_active(self, on: bool) -> None:
+        on = bool(on)
+        if on == self._active:
+            return
+        self._active = on
+        self.update()
+
+    def mousePressEvent(self, event) -> None:  # noqa: N802
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._pressed = True
+            self.update()
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event) -> None:  # noqa: N802
+        was = self._pressed
+        self._pressed = False
+        self.update()
+        if (
+            was
+            and event.button() == Qt.MouseButton.LeftButton
+            and self.rect().contains(event.position().toPoint())
+        ):
+            self.clicked.emit()
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+
+    def leaveEvent(self, event) -> None:  # noqa: N802
+        if self._pressed:
+            self._pressed = False
+        self.update()
+        super().leaveEvent(event)
+
+    def enterEvent(self, event) -> None:  # noqa: N802
+        self.update()
+        super().enterEvent(event)
+
+    def paintEvent(self, event) -> None:  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if self._active:
+            plate = QColor("#E4F1EA") if self._pressed else QColor("#EEF7F2")
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(plate)
+            p.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 7, 7)
+            ink = QColor("#00C375")
+        elif self._pressed:
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor("#E6E6E6"))
+            p.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 7, 7)
+            ink = QColor(75, 75, 75)
+        elif self.underMouse():
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor("#F2F2F2"))
+            p.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 7, 7)
+            ink = QColor(75, 75, 75)
+        else:
+            ink = QColor(75, 75, 75)
+        _paint_line_icon(
+            p,
+            self._kind,
+            cx=self.width() / 2.0,
+            cy=self.height() / 2.0,
+            color=ink,
+        )
         p.end()
 
 
@@ -1849,11 +2022,12 @@ class PreviewWindow(QWidget):
         self._wechat_min_latched: bool | None = None
         # 顶栏指纹轮询：本地很快；变了再打识名 API
         self._contact_poll = QTimer(self)
-        self._contact_poll.setInterval(1000)
+        # 顶栏指纹本地很快；略密一点，切会话更跟手
+        self._contact_poll.setInterval(450)
         self._contact_poll.timeout.connect(self._poll_contact_header)
         self._contact_debounce = QTimer(self)
         self._contact_debounce.setSingleShot(True)
-        self._contact_debounce.setInterval(180)
+        self._contact_debounce.setInterval(100)
         self._contact_debounce.timeout.connect(self._on_contact_debounce_fire)
         # 自动模式：画面变化稳定后触发分析
         self._auto_armed_at = 0.0
@@ -1903,46 +2077,46 @@ class PreviewWindow(QWidget):
         self.act_restore.setToolTip("微信最小化时点此还原，再继续采集")
         self.act_restore.triggered.connect(self.restore_target)
 
-        self.act_clear = QAction(_line_icon("clear"), "清屏", self)
+        self.act_clear = QAction(_line_icon("clear"), "清理屏幕", self)
         self.act_clear.setToolTip("清空识别详情与候选（不影响预览采集）")
         self.act_clear.triggered.connect(self.clear_results)
 
-        self.act_import_mem = QAction(_line_icon("detail"), "导入上下文", self)
-        self.act_import_mem.setToolTip("粘贴聊天记录到当前联系人记忆，供后续起草使用")
-        self.act_import_mem.triggered.connect(self._on_import_memory)
+        # 保留供同步过程中禁用；菜单改为二级「语境参数」面板
+        self.act_pull_mem = QAction("同步上下文", self)
+        self.act_pull_mem.setVisible(False)
 
-        self.act_pull_mem = QAction(_line_icon("analyze"), "同步上下文", self)
-        self.act_pull_mem.setToolTip(
-            "OCR 点多选/选择到这里/复制 → 写入记忆（同步时暂停识名，请先打开目标会话）"
-        )
-        self.act_pull_mem.triggered.connect(self._on_pull_memory)
-
-        self.act_clear_mem = QAction(_line_icon("clear"), "清除上下文", self)
-        self.act_clear_mem.setToolTip("清空当前联系人的本地聊天记忆（不影响微信本身）")
-        self.act_clear_mem.triggered.connect(self._on_clear_memory)
+        self.act_context = QAction(_line_icon("context"), "语境参数", self)
+        self.act_context.setToolTip("上下文导入 / 同步 / 清除（Tab 分栏）")
+        self.act_context.triggered.connect(self._open_context_hub)
 
         self.act_recal_layout = QAction(_line_icon("refresh"), "重构布局", self)
         self.act_recal_layout.setToolTip("重新校准微信布局")
         self.act_recal_layout.triggered.connect(self._on_recal_layout)
 
-        self.act_back_main = QAction(_line_icon("restore"), "回到主界面", self)
+        self.act_back_main = QAction(_line_icon("home"), "回主界面", self)
         self.act_back_main.setToolTip("打开 Joy 设置主界面，方便改配置")
         self.act_back_main.triggered.connect(self._on_back_to_main)
 
+        self.act_coach_guide = QAction(_line_icon("detail"), "动态指引", self)
+        self.act_coach_guide.setToolTip("分步高亮副驾界面（可随时跳过）")
+        self.act_coach_guide.triggered.connect(
+            lambda: self.start_coach_tour(force=True)
+        )
+
         self.act_mode = QAction(_line_icon("mode"), "侧窗模式", self)
-        self.act_mode.setToolTip("全视 / 侧窗切换")
+        self.act_mode.setToolTip("大窗模式 / 侧窗模式切换")
         self.act_mode.triggered.connect(self._toggle_display_mode)
 
-        self.act_dock_preview = QAction(_line_icon("preview"), "截图预览", self)
+        self.act_dock_preview = QAction(_line_icon("preview"), "截屏预览", self)
         self.act_dock_preview.setCheckable(True)
-        self.act_dock_preview.setToolTip("侧窗模式显示 / 隐藏微信截图预览")
+        self.act_dock_preview.setToolTip("侧窗模式显示 / 隐藏微信截屏预览")
         self.act_dock_preview.setChecked(
             bool(getattr(self.cfg.ui, "dock_show_preview", True))
         )
         self.act_dock_preview.toggled.connect(self._on_menu_dock_preview_toggled)
 
         self.act_analyze = QAction(_line_icon("analyze"), "手动分析", self)
-        self.act_analyze.setToolTip("立即截屏并调用 API 生成候选回复")
+        self.act_analyze.setToolTip("立即解析当前会话")
         self.act_analyze.triggered.connect(lambda: self.run_analyze(auto=False))
 
         self.act_auto = QAction(_line_icon("auto"), "自动驾驶", self)
@@ -1965,9 +2139,9 @@ class PreviewWindow(QWidget):
         )
         self.act_e_stop.triggered.connect(self._emergency_stop)
 
-        self.act_detail = QAction(_line_icon("detail"), "识别详情", self)
+        self.act_detail = QAction(_line_icon("detail"), "对话详情", self)
         self.act_detail.setCheckable(True)
-        self.act_detail.setToolTip("展开 / 折叠识别详情")
+        self.act_detail.setToolTip("展开 / 折叠解析后的对话详情")
         self.act_detail.toggled.connect(self._on_menu_detail_toggled)
 
         self.more_menu = QMenu(self)
@@ -1978,19 +2152,18 @@ class PreviewWindow(QWidget):
         self.more_menu.addAction(self.act_smart)
         self.more_menu.addAction(self.act_e_stop)
         self.more_menu.addSeparator()
-        # 暂隐：刷新 / 暂停预览 / 还原 / 识别详情（日后再排）
+        # 暂隐：刷新 / 暂停预览 / 还原
         # self.more_menu.addAction(self.act_refresh)
         # self.more_menu.addAction(self.act_pause)
         # self.more_menu.addAction(self.act_restore)
         self.more_menu.addAction(self.act_clear)
-        self.more_menu.addAction(self.act_import_mem)
-        self.more_menu.addAction(self.act_pull_mem)
-        self.more_menu.addAction(self.act_clear_mem)
+        self.more_menu.addAction(self.act_detail)
+        self.more_menu.addAction(self.act_context)
         self.more_menu.addAction(self.act_recal_layout)
-        self.more_menu.addAction(self.act_back_main)
-        # self.more_menu.addAction(self.act_detail)
         self.more_menu.addAction(self.act_dock_preview)
         self.more_menu.addAction(self.act_mode)
+        self.more_menu.addAction(self.act_coach_guide)
+        self.more_menu.addAction(self.act_back_main)
         self.more_menu.aboutToShow.connect(self._sync_more_menu)
 
         self.btn_more = MoreDotsButton()
@@ -2007,7 +2180,7 @@ class PreviewWindow(QWidget):
         self.btn_analyze.setObjectName("AnalyzeBtn")
         self.btn_analyze.setFlat(True)
         self.btn_analyze.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_analyze.setToolTip("立即截屏并调用 API 生成候选回复")
+        self.btn_analyze.setToolTip("立即解析当前会话")
         self.btn_analyze.clicked.connect(self.run_analyze)
 
         # 顶栏：左群名/人名 · 右 ···
@@ -2191,31 +2364,17 @@ class PreviewWindow(QWidget):
 
         bar = QFrame()
         bar.setObjectName("ComposeBar")
-        bar_lay = QHBoxLayout(bar)
-        bar_lay.setContentsMargins(0, 8, 0, 0)
-        bar_lay.setSpacing(8)
-        bar_lay.addStretch(1)
+        self._compose_bar = bar
+        self._compose_bar_lay = QHBoxLayout(bar)
+        self._compose_bar_lay.setContentsMargins(0, 8, 0, 0)
+        self._compose_bar_lay.setSpacing(8)
+        # 状态灯始终创建（可不在槽位里显示，逻辑仍可更新）
         self.detail_badge = DetailBadge()
         self.detail_badge.clicked.connect(self._on_detail_badge_clicked)
-        bar_lay.addWidget(
-            self.detail_badge,
-            stretch=0,
-            alignment=Qt.AlignmentFlag.AlignVCenter,
-        )
         self.drive_badge = DriveModeBadge()
         self.drive_badge.clicked.connect(self._on_drive_badge_clicked)
-        bar_lay.addWidget(
-            self.drive_badge,
-            stretch=0,
-            alignment=Qt.AlignmentFlag.AlignVCenter,
-        )
         self.estop_badge = EStopBadge()
         self.estop_badge.clicked.connect(self._emergency_stop)
-        bar_lay.addWidget(
-            self.estop_badge,
-            stretch=0,
-            alignment=Qt.AlignmentFlag.AlignVCenter,
-        )
         self.btn_compose_send = QPushButton("发送")
         self.btn_compose_send.setObjectName("ComposeSend")
         self.btn_compose_send.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -2225,14 +2384,13 @@ class PreviewWindow(QWidget):
         self.btn_compose_send.setEnabled(False)
         self.btn_compose_send.clicked.connect(self._compose_send)
         self._sync_compose_send_label()
-        bar_lay.addWidget(
-            self.btn_compose_send,
-            stretch=0,
-            alignment=Qt.AlignmentFlag.AlignVCenter,
-        )
+        self._dock_icon_badges: dict[str, IconSlotBadge] = {}
         compose_lay.addWidget(bar)
+        self.apply_dock_bar_slots()
 
         self.compose_box.setMinimumHeight(72)
+        # 底栏图标 28px + 内边距，禁止布局压成「细线」
+        bar.setMinimumHeight(36)
         # 外壳：侧窗左右 4px 离第二层边；通栏分隔线不受影响
         self.compose_shell = QWidget()
         self.compose_shell.setObjectName("ComposeShell")
@@ -2247,6 +2405,7 @@ class PreviewWindow(QWidget):
 
         # 正中央浅灰提示（叠在内容之上）
         self._center_toast = CenterToast(self)
+        self._coach_overlay = None  # lazy：joy.app.coach_tour.CoachTourOverlay
 
         # 恢复自动模式：只武装 + 抓基准，不立刻分析
         if self.cfg.ui.auto_mode:
@@ -2269,6 +2428,9 @@ class PreviewWindow(QWidget):
         # 进入副驾即自动预览
         QTimer.singleShot(0, self._ensure_preview)
         QTimer.singleShot(200, self._ensure_preview)
+        # 大窗：无 sync_after_open 贴边流程，延迟弹出首次指引
+        if not self.is_dock_mode():
+            QTimer.singleShot(1000, lambda: self._maybe_start_coach_tour(force=False))
 
     def is_dock_mode(self) -> bool:
         return self._display_mode == "dock"
@@ -2309,7 +2471,7 @@ class PreviewWindow(QWidget):
         self.act_pause.setIcon(_line_icon("pause", paused=paused))
         self.act_pause.setText("继续预览" if paused else "暂停预览")
         self.act_mode.setIcon(_line_icon("mode", mode_dock=dock))
-        self.act_mode.setText("全视" if dock else "侧窗模式")
+        self.act_mode.setText("大窗模式" if dock else "侧窗模式")
         self.act_restore.setText("还原" if dock else "还原窗口")
         # 初始化早期 toolbar 重建时，btn_auto / btn_detail 可能尚未创建
         btn_auto = getattr(self, "btn_auto", None)
@@ -2336,10 +2498,128 @@ class PreviewWindow(QWidget):
             self.act_dock_preview.setEnabled(dock)
             self.act_dock_preview.blockSignals(False)
             self.act_dock_preview.setToolTip(
-                "侧窗模式显示 / 隐藏微信截图预览"
+                "侧窗模式显示 / 隐藏微信截屏预览"
                 if dock
-                else "仅侧窗模式可用（全视始终显示预览）"
+                else "仅侧窗模式可用（大窗始终显示预览）"
             )
+
+    def apply_dock_bar_slots(self) -> None:
+        """按配置重建底栏：4 可配槽 + 固定驾驶灯 + 固定急停 + 发送。"""
+        from joy.core.dock_bar import (
+            action_icon_kind,
+            action_tip,
+            normalize_dock_bar_slots,
+        )
+
+        lay = getattr(self, "_compose_bar_lay", None)
+        if lay is None:
+            return
+        slots = normalize_dock_bar_slots(
+            getattr(self.cfg.ui, "dock_bar_slots", None)
+        )
+        self.cfg.ui.dock_bar_slots = list(slots)
+
+        # 拆下旧子控件（核心徽标保留实例，其它 icon 槽删除）
+        keep = {
+            self.detail_badge,
+            self.drive_badge,
+            self.estop_badge,
+            self.btn_compose_send,
+        }
+        while lay.count():
+            item = lay.takeAt(0)
+            w = item.widget()
+            if w is None:
+                continue
+            if w in keep:
+                w.setParent(None)
+            else:
+                w.deleteLater()
+        self._dock_icon_badges = {}
+
+        lay.addStretch(1)
+        for aid in slots:
+            if aid == "empty":
+                continue
+            if aid == "detail":
+                lay.addWidget(
+                    self.detail_badge,
+                    stretch=0,
+                    alignment=Qt.AlignmentFlag.AlignVCenter,
+                )
+                continue
+            badge = IconSlotBadge(
+                action_icon_kind(aid),
+                action_tip(aid),
+                active=self._dock_slot_active(aid),
+            )
+            badge.clicked.connect(
+                lambda _=False, a=aid: self._on_dock_slot_action(a)
+            )
+            self._dock_icon_badges[aid] = badge
+            lay.addWidget(
+                badge, stretch=0, alignment=Qt.AlignmentFlag.AlignVCenter
+            )
+
+        # 槽 5：驾驶模式灯（固定）；槽 6：急停（固定）
+        lay.addWidget(
+            self.drive_badge,
+            stretch=0,
+            alignment=Qt.AlignmentFlag.AlignVCenter,
+        )
+        lay.addWidget(
+            self.estop_badge,
+            stretch=0,
+            alignment=Qt.AlignmentFlag.AlignVCenter,
+        )
+        lay.addWidget(
+            self.btn_compose_send,
+            stretch=0,
+            alignment=Qt.AlignmentFlag.AlignVCenter,
+        )
+        self._sync_dock_slot_visuals()
+
+    def _dock_slot_active(self, action_id: str) -> bool:
+        if action_id == "preview":
+            return bool(getattr(self.cfg.ui, "dock_show_preview", True)) and bool(
+                self.is_dock_mode()
+            )
+        if action_id == "detail":
+            btn = getattr(self, "btn_detail", None)
+            return bool(btn is not None and btn.isChecked())
+        return False
+
+    def _sync_dock_slot_visuals(self) -> None:
+        badges = getattr(self, "_dock_icon_badges", None) or {}
+        for aid, badge in badges.items():
+            badge.set_active(self._dock_slot_active(aid))
+        # 详情灯若在槽内，用自身 active
+        if self.detail_badge.parent() is not None:
+            btn = getattr(self, "btn_detail", None)
+            self.detail_badge.set_active(bool(btn is not None and btn.isChecked()))
+
+    def _on_dock_slot_action(self, action_id: str) -> None:
+        aid = (action_id or "").strip().lower()
+        if aid == "analyze":
+            self.run_analyze(auto=False)
+        elif aid == "preview":
+            on = not bool(getattr(self.cfg.ui, "dock_show_preview", True))
+            if getattr(self, "act_dock_preview", None) is not None:
+                self.act_dock_preview.blockSignals(True)
+                self.act_dock_preview.setChecked(on)
+                self.act_dock_preview.blockSignals(False)
+            self._on_menu_dock_preview_toggled(on)
+        elif aid == "clear":
+            self.clear_results()
+        elif aid == "context":
+            self._open_context_hub()
+        elif aid == "mode":
+            self._toggle_display_mode()
+        elif aid == "recal":
+            self._on_recal_layout()
+        elif aid == "back_main":
+            self._on_back_to_main()
+        self._sync_dock_slot_visuals()
 
     def _on_menu_dock_preview_toggled(self, on: bool) -> None:
         self.cfg.ui.dock_show_preview = bool(on)
@@ -2348,9 +2628,10 @@ class PreviewWindow(QWidget):
         except Exception:
             pass
         self._apply_dock_preview_visibility()
+        self._sync_dock_slot_visuals()
         if self.is_dock_mode():
             self._show_center_toast(
-                "已显示截图预览" if on else "已隐藏截图预览"
+                "已显示截屏预览" if on else "已隐藏截屏预览"
             )
 
     def _apply_dock_preview_visibility(self) -> None:
@@ -2509,6 +2790,74 @@ class PreviewWindow(QWidget):
         if toast is None:
             return
         toast.show_toast(text, ms=ms)
+
+    def _resolve_coach_target(self, target_id: str) -> QWidget | None:
+        tid = (target_id or "").strip()
+        mapping: dict[str, QWidget | None] = {
+            "chat_title": getattr(self, "chat_title", None),
+            "btn_more": getattr(self, "btn_more", None),
+            "compose_box": getattr(self, "compose_box", None),
+            "compose_bar": getattr(self, "_compose_bar", None),
+            "drive_badge": getattr(self, "drive_badge", None),
+            "estop_badge": getattr(self, "estop_badge", None),
+            "btn_compose_send": getattr(self, "btn_compose_send", None),
+            "detail_badge": getattr(self, "detail_badge", None),
+            "collapse_btn": getattr(self, "_collapse_btn", None),
+        }
+        if tid in mapping:
+            return mapping[tid]
+        badges = getattr(self, "_dock_icon_badges", None) or {}
+        return badges.get(tid)
+
+    def _maybe_start_coach_tour(self, *, force: bool = False) -> None:
+        if not force and bool(getattr(self.cfg.ui, "coach_tour_done", False)):
+            return
+        if not self.isVisible() or self._dock_collapsed:
+            return
+        self.start_coach_tour(force=force)
+
+    def start_coach_tour(self, *, force: bool = True) -> None:
+        """启动动态指引。force=True 时忽略 coach_tour_done（菜单/使用说明重看）。"""
+        if not force and bool(getattr(self.cfg.ui, "coach_tour_done", False)):
+            return
+        if not self.isVisible():
+            self.show()
+        if self._dock_collapsed:
+            expand = getattr(self, "_expand_from_wake", None)
+            if callable(expand):
+                expand()
+        from joy.app.coach_tour import (
+            CoachTourOverlay,
+            default_dock_steps,
+            default_normal_steps,
+        )
+
+        overlay = getattr(self, "_coach_overlay", None)
+        if overlay is None:
+            overlay = CoachTourOverlay(self)
+            overlay.finished.connect(self._on_coach_tour_finished)
+            self._coach_overlay = overlay
+        elif overlay.is_active():
+            return
+        # 侧窗指引要看到标题栏 △，先确保收起钮可见
+        if self.is_dock_mode():
+            show_c = getattr(self, "_show_collapse_btn", None)
+            if callable(show_c):
+                show_c()
+        steps = (
+            default_dock_steps() if self.is_dock_mode() else default_normal_steps()
+        )
+        overlay.start(steps, self._resolve_coach_target)
+
+    def _on_coach_tour_finished(self, completed: bool) -> None:
+        # 走完或跳过都记已看过，避免每次打开都弹；使用说明可强制重看
+        self.cfg.ui.coach_tour_done = True
+        try:
+            self.cfg.save()
+        except Exception:
+            pass
+        if completed:
+            self._show_center_toast("指引完成 · 可在 ··· 里重看", ms=2200)
 
     def _on_menu_detail_toggled(self, on: bool) -> None:
         if bool(self.btn_detail.isChecked()) == bool(on):
@@ -3317,13 +3666,16 @@ class PreviewWindow(QWidget):
             pass
 
     def _apply_caption_branding(self, *, dock: bool) -> None:
-        """侧窗：隐藏标题文字与 logo；全视：恢复正常标题。"""
+        """侧窗：隐藏标题文字与标题栏图标；全视：恢复正常标题。
+
+        注意：不可把窗口图标设成透明——Win 任务栏会跟着变空白。
+        侧窗用 WM_SETICON 清标题栏图标，任务栏回退到 exe / 应用图标。
+        """
+        from joy.app.branding import load_app_icon
+
+        self.setWindowIcon(load_app_icon())
         if dock:
             self.setWindowTitle("")
-            # 透明空图标，避免 Win 回退到默认 exe 图标
-            pix = QPixmap(1, 1)
-            pix.fill(Qt.GlobalColor.transparent)
-            self.setWindowIcon(QIcon(pix))
             QTimer.singleShot(0, self._strip_caption_icon)
             QTimer.singleShot(80, self._strip_caption_icon)
             self._apply_caption_glass(dock=True)
@@ -3420,9 +3772,9 @@ class PreviewWindow(QWidget):
                     self.show()
                 # 重建 HWND 后标题/图标会回来，再清一次
                 self._apply_caption_branding(dock=True)
-            # 切模式后立刻按微信外框贴边；第二拍再校正标题栏增量
-            QTimer.singleShot(0, self._dock_to_wechat)
-            QTimer.singleShot(80, self._dock_to_wechat)
+            # 切模式后合并贴边，避免连打闪影
+            self._schedule_dock_to_wechat(0)
+            self._schedule_dock_to_wechat(120)
             self._dock_follow.start()
             self._dock_vis_timer.start()
             self._dock_z_timer.start()
@@ -3481,6 +3833,7 @@ class PreviewWindow(QWidget):
                 self.cfg.save()
             except Exception:
                 pass
+        self._sync_dock_slot_visuals()
 
     def _screen_dpr_for_hwnd(self, hwnd: int) -> float:
         # 取 Win32 / Qt 中较大者，避免任一路径偶发落到 1.0 把物理像素当逻辑用
@@ -3525,6 +3878,48 @@ class PreviewWindow(QWidget):
             int((g.y() + g.height()) * dpr),
         )
 
+    def _dock_scale_for_wechat(
+        self, hwnd: int, wr: tuple[int, int, int, int]
+    ) -> tuple[tuple[int, int, int, int], float, str]:
+        """校正微信外框 + 贴边除数。返回 (rect, scale, reason)。"""
+        dpr = self._screen_dpr_for_hwnd(hwnd) or 1.0
+        dpr = max(float(dpr), float(self.devicePixelRatioF() or 1.0), 1.0)
+        scr_h = None
+        scr = self.screen() or QGuiApplication.primaryScreen()
+        if scr is not None:
+            scr_h = int(scr.availableGeometry().height())
+        rect, scale, why = resolve_dock_anchor(
+            wr=wr, dpr=dpr, screen_logical_h=scr_h
+        )
+        # 物理外框很高却被判成 1.0 时，仍按真实 DPR
+        if scale < 1.5 and (rect[3] - rect[1]) >= 1100 and why != "inflate":
+            scale = max(dpr, 2.0)
+            why = "physical-tall"
+        return rect, float(scale), why
+
+    def _work_area_for_dock(
+        self, hwnd: int, scale: float
+    ) -> tuple[int, int, int, int]:
+        """与 window_screen_rect 同单位的工作区。"""
+        if scale >= 1.5:
+            return self._work_area_physical(hwnd)
+        # scale≈1：Win32 矩形已与 Qt 逻辑同空间，工作区不要再 *dpr
+        rect = window_screen_rect(hwnd)
+        dpr = max(self._screen_dpr_for_hwnd(hwnd) or 1.0, 1.0)
+        if rect:
+            cx = int((rect[0] + rect[2]) / 2)
+            cy = int((rect[1] + rect[3]) / 2)
+            # 若 rect 实为物理，中心先试 /dpr 再试原值
+            screen = QGuiApplication.screenAt(QPoint(int(cx / dpr), int(cy / dpr)))
+            if screen is None:
+                screen = QGuiApplication.screenAt(QPoint(cx, cy))
+        else:
+            screen = QGuiApplication.primaryScreen()
+        g = screen.availableGeometry() if screen else None
+        if g is None:
+            return 0, 0, 1920, 1080
+        return int(g.x()), int(g.y()), int(g.x() + g.width()), int(g.y() + g.height())
+
     def _sync_visibility_with_wechat(self, window: WindowInfo) -> bool:
         """
         侧窗显示跟随微信主窗：最小化→隐藏；调出→再显示。
@@ -3555,9 +3950,8 @@ class PreviewWindow(QWidget):
             self._hide_wake_btn()
             # 不抢焦点；尽快贴边，后续再校正还原动画
             self._show_dock_noactivate()
-            QTimer.singleShot(0, self._dock_to_wechat)
-            QTimer.singleShot(60, self._dock_to_wechat)
-            QTimer.singleShot(180, self._dock_to_wechat)
+            self._schedule_dock_to_wechat(0)
+            self._schedule_dock_to_wechat(160)
             QTimer.singleShot(40, self._show_collapse_btn)
             return True
 
@@ -3575,6 +3969,9 @@ class PreviewWindow(QWidget):
             self._apply_caption_branding(dock=True)
             self._apply_shell_chrome(dock=True)
             QTimer.singleShot(0, self._ensure_hidden_if_wechat_minimized)
+            # show 后合并贴边，避免连打 setFixedSize 闪影
+            self._schedule_dock_to_wechat(0)
+            self._schedule_dock_to_wechat(160)
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         super().resizeEvent(event)
@@ -3584,6 +3981,9 @@ class PreviewWindow(QWidget):
         toast = getattr(self, "_center_toast", None)
         if toast is not None and toast.isVisible():
             toast._reposition()
+        coach = getattr(self, "_coach_overlay", None)
+        if coach is not None and coach.is_active():
+            coach.relayout()
 
     def _ensure_hidden_if_wechat_minimized(self) -> None:
         if not self.is_dock_mode():
@@ -3610,13 +4010,14 @@ class PreviewWindow(QWidget):
             self._dock_hidden_for_wechat = True
             self.hide()
             return
-        self._dock_to_wechat()
-        QTimer.singleShot(80, self._dock_to_wechat)
-        QTimer.singleShot(200, self._dock_to_wechat)
+        self._schedule_dock_to_wechat(0)
+        self._schedule_dock_to_wechat(140)
         # 像素布局很快：每次打开副驾都重算一遍，不吃磁盘旧缓存
         QTimer.singleShot(280, lambda: self._ensure_wechat_layout(force=True))
         QTimer.singleShot(400, lambda: self._refresh_contact_title(force=True))
         self._start_contact_watch()
+        # 贴边/布局落稳后再弹首次动态指引，避免和 setFixedSize 抢几何
+        QTimer.singleShot(1200, lambda: self._maybe_start_coach_tour(force=False))
 
     def _wechat_client_logical(self, hwnd: int) -> tuple[int, int, float, float] | None:
         """返回 (client_w, client_h, dpr, client_top) 逻辑像素。"""
@@ -3837,7 +4238,6 @@ class PreviewWindow(QWidget):
         if self._layout_probe_pending_fp and fp != self._layout_probe_pending_fp:
             # 仍启动，以当前为准
             pass
-        self._flash_status("正在校准微信布局…", linger_ms=0)
         worker = LayoutProbeWorker(
             self.cfg, window, client_w=cw, client_h=ch, dpr=dpr, parent=self
         )
@@ -3865,19 +4265,12 @@ class PreviewWindow(QWidget):
         client_h = float(dims[1]) if dims else float(layout.client_h)
         client_top = float(dims[3]) if dims else None
         self._apply_layout_to_compose(layout, client_h, client_top=client_top)
-        self._flash_status(
-            f"布局已校准 · 输入区高 {self.compose_box.height()}px"
-            + (f" / 微信约 {int(round((layout.compose_area.bottom - layout.compose_area.top) * client_h))}px"
-               if client_h else ""),
-            linger_ms=2500,
-        )
         # 几何跟随可能刚改完窗高，下一拍再套一次高度，确保顶边对齐
         QTimer.singleShot(120, lambda: self._ensure_wechat_layout(force=False))
         cb = self._layout_recal_cb
         self._layout_recal_cb = None
         if cb:
-            h = self.compose_box.height()
-            cb(True, f"指纹 {layout.fingerprint} · compose 高 {h}px")
+            cb(True, "")
 
     def _on_layout_probe_err(self, err: str) -> None:
         self._layout_probe = None
@@ -3891,7 +4284,6 @@ class PreviewWindow(QWidget):
             self._layout_fail_until = time.time() + 90.0
             self._layout_probe_pending_fp = ""
         self._apply_layout_to_compose(self._wechat_layout, client_h, client_top=client_top)
-        self._flash_status(f"布局校准失败：{err}", linger_ms=6000)
         cb = self._layout_recal_cb
         self._layout_recal_cb = None
         if cb:
@@ -3921,7 +4313,7 @@ class PreviewWindow(QWidget):
         if host is None:
             QMessageBox.information(
                 self,
-                "回到主界面",
+                "回主界面",
                 "未找到设置主界面。可从系统托盘图标打开「打开设置」。",
             )
             return
@@ -3951,13 +4343,10 @@ class PreviewWindow(QWidget):
             )
             return
         self.act_recal_layout.setEnabled(False)
-        self._flash_status("正在重构布局…", linger_ms=6000)
 
         def _done(ok: bool, msg: str) -> None:
             self.act_recal_layout.setEnabled(True)
-            if ok:
-                self._flash_status(f"布局已重构 · {msg}", linger_ms=4000)
-            else:
+            if not ok:
                 QMessageBox.warning(self, "重构布局失败", msg or "未知错误")
 
         self.request_layout_recalibrate(on_done=_done)
@@ -3978,9 +4367,14 @@ class PreviewWindow(QWidget):
     def _phys_to_dock_logical(
         self, x: int, y: int, w: int, h: int, dpr: float
     ) -> tuple[int, int, int, int]:
-        """物理贴边矩形 → Qt 逻辑外框。侧窗宽固定约 320，杜绝 640 物理像素误用。"""
-        scale = max(1.0, float(dpr), float(self.devicePixelRatioF() or 1.0))
-        # Win32 客户区/外框是物理像素；若 scale 仍像 1.0 但宽已是 640，强制按 2x
+        """贴边矩形 → Qt 逻辑外框。
+
+        dpr 实为 dock_coord_scale 结果：可能是真实 DPR，也可能是 1.0
+        （Win32 矩形已与 Qt 逻辑同空间）。不要再和 devicePixelRatio 取 max，
+        否则会把已判定的 scale=1 又抬回 2，侧窗缩成一半。
+        """
+        scale = max(1.0, float(dpr or 1.0))
+        # 宽度已是 2x 物理侧窗宽、却仍像 scale=1 → 强制按物理像素除
         if w >= 560 and scale < 1.5:
             scale = 2.0
         fx, fy = int(round(x / scale)), int(round(y / scale))
@@ -3996,10 +4390,15 @@ class PreviewWindow(QWidget):
             if avail_h > 1100 and scale >= 1.5:
                 avail_h = int(round(avail_h / scale))
             fh = max(200, min(fh, max(200, avail_h)))
-        # 已贴边时禁止高度相对当前翻倍（消 685↔1370 来回）
-        if self.is_dock_mode() and self.height() >= 240:
+        # 消 685↔1370 振荡：仅当「当前已是合理侧窗高」却突然要翻倍时才钳住。
+        # 启动首帧常偏矮，必须允许拉高到微信高度，否则会锁死成小白条。
+        if self.is_dock_mode() and self.isVisible() and self.height() >= 240:
             cur_h = self.frameGeometry().height()
-            if cur_h <= 900 and fh >= int(cur_h * 1.6):
+            if (
+                480 <= cur_h <= 900
+                and fh >= int(cur_h * 1.8)
+                and cur_h >= int(fh * 0.55)
+            ):
                 fh = cur_h
                 fx, fy = self.frameGeometry().x(), self.frameGeometry().y()
         return fx, fy, fw, fh
@@ -4016,93 +4415,112 @@ class PreviewWindow(QWidget):
             return
         if not self._sync_visibility_with_wechat(window):
             return
-        wr = window_screen_rect(window.hwnd)
-        if wr is None:
+        wr_raw = window_screen_rect(window.hwnd)
+        if wr_raw is None:
             return
-        dpr = self._screen_dpr_for_hwnd(window.hwnd)
-        if dpr <= 0:
-            dpr = 1.0
-        # 与换算用同一 scale，避免 panel 按 2x 算、结果按 1x 除
-        scale = max(dpr, float(self.devicePixelRatioF() or 1.0))
-        if scale < 1.5:
-            # 物理外框高度若 >1100，多半是 200% 屏
-            if (wr[3] - wr[1]) >= 1100:
-                scale = 2.0
-        work_phys = self._work_area_physical(window.hwnd)
-        panel_w_phys = int(320 * scale)
-        geo_phys = compute_dock_beside(
+        dpr = self._screen_dpr_for_hwnd(window.hwnd) or 1.0
+        wr, scale, why = self._dock_scale_for_wechat(window.hwnd, wr_raw)
+        work = self._work_area_for_dock(window.hwnd, scale)
+        panel_w = int(320 * scale)
+        geo = compute_dock_beside(
             window.hwnd,
-            panel_w_phys,
+            panel_w,
             None,
             gap=0,
-            work=work_phys,
+            work=work,
             min_w=int(260 * scale),
+            anchor_rect=wr,
         )
-        if geo_phys is None:
+        if geo is None:
             return
-        x, y, w, h = geo_phys
+        x, y, w, h = geo
         fx, fy, fw, fh = self._phys_to_dock_logical(x, y, w, h, scale)
+        # 几何几乎不变则跳过，避免连打 setFixedSize 闪影
+        if self.isVisible():
+            cur = self.frameGeometry()
+            if (
+                abs(cur.x() - fx) <= 2
+                and abs(cur.y() - fy) <= 2
+                and abs(cur.width() - fw) <= 2
+                and abs(cur.height() - fh) <= 2
+            ):
+                return
+        log.info(
+            "dock geo scale=%.2f dpr=%.2f why=%s raw_h=%s corr=%sx%s logical=%sx%s@%s,%s",
+            scale,
+            dpr,
+            why,
+            wr_raw[3] - wr_raw[1],
+            wr[2] - wr[0],
+            wr[3] - wr[1],
+            fw,
+            fh,
+            fx,
+            fy,
+        )
         self._apply_frame_geometry(fx, fy, fw, fh)
-        self._flush_to_wechat_visible(window.hwnd)
+        # inflate 校正框与真实 Win32 不同单位，贴缝追高会抖/裁切
+        if why != "inflate":
+            self._flush_to_wechat_visible(window.hwnd)
         self._show_collapse_btn()
         self._ensure_wechat_layout(force=False)
 
+    def _schedule_dock_to_wechat(self, delay_ms: int = 0) -> None:
+        """合并多次贴边请求，减少启动闪影。"""
+        t = getattr(self, "_dock_geo_timer", None)
+        if t is None:
+            t = QTimer(self)
+            t.setSingleShot(True)
+            t.timeout.connect(self._dock_to_wechat)
+            self._dock_geo_timer = t
+        t.start(max(0, int(delay_ms)))
+
     def _flush_to_wechat_visible(self, wechat_hwnd: int) -> None:
-        """按 DWM 可见外框：左右贴缝、顶边对齐，并显式对齐底边。"""
+        """按可见外框：左右贴缝、顶边对齐，并显式对齐底边。"""
         try:
             hwnd = int(self.winId())
         except Exception:
             return
-        dpr = self._screen_dpr_for_hwnd(wechat_hwnd) or 1.0
-        if dpr <= 0:
-            dpr = 1.0
-        joy_dpr = float(self.devicePixelRatioF() or 1.0)
-        scale = max(dpr, joy_dpr)
-        if scale < 1.5:
-            scale = max(scale, dpr)
+        wr0 = window_screen_rect(wechat_hwnd)
+        if wr0 is None:
+            return
+        wr, scale, _why = self._dock_scale_for_wechat(wechat_hwnd, wr0)
+        al, at, ar, ab = wr
 
         def _once() -> None:
-            a = window_screen_rect(wechat_hwnd)
             b = window_screen_rect(hwnd)
-            if a is None or b is None:
+            if b is None:
                 return
-            al, at, ar, ab = a
             bl, bt, br, bb = b
             acx = (al + ar) / 2.0
             bcx = (bl + br) / 2.0
-            # 水平贴缝
             if bcx >= acx:
                 dx_p = ar - bl
             else:
                 dx_p = al - br
             dx = int(round(dx_p / scale))
-            # 顶边对齐
             dy = int(round((at - bt) / scale))
             if dx or dy:
                 self.move(self.x() + dx, self.y() + dy)
 
-            # 改位置后再读，按底边差调整高度（Joy 底低于微信 → 缩短）
             b2 = window_screen_rect(hwnd)
             if b2 is None:
                 return
-            _bl, bt2, _br, bb2 = b2
-            bottom_slack_p = int(bb2 - ab)  # >0：侧窗底边更靠下
+            bottom_slack_p = int(b2[3] - ab)
             if abs(bottom_slack_p) >= max(2, int(round(scale))):
                 delta = int(round(bottom_slack_p / scale))
                 nh = max(180, self.height() - delta)
-                if nh > 1000:
-                    nh = max(180, int(round(nh / max(scale, 2.0))))
+                if nh > 1000 and scale >= 1.5:
+                    nh = max(180, int(round(nh / scale)))
                 if abs(nh - self.height()) >= 1:
                     self.setFixedSize(self.width(), nh)
 
-            # resize 后顶边可能漂，再拉齐一次
             b3 = window_screen_rect(hwnd)
             if b3 is None:
                 return
             dy2 = int(round((at - b3[1]) / scale))
             if dy2:
                 self.move(self.x(), self.y() + dy2)
-            # 顶边拉齐后再看底边，必要时再砍一刀
             b4 = window_screen_rect(hwnd)
             if b4 is None:
                 return
@@ -4110,8 +4528,8 @@ class PreviewWindow(QWidget):
             if abs(slack2) >= max(2, int(round(scale))):
                 delta2 = int(round(slack2 / scale))
                 nh2 = max(180, self.height() - delta2)
-                if nh2 > 1000:
-                    nh2 = max(180, int(round(nh2 / max(scale, 2.0))))
+                if nh2 > 1000 and scale >= 1.5:
+                    nh2 = max(180, int(round(nh2 / scale)))
                 if abs(nh2 - self.height()) >= 1:
                     self.setFixedSize(self.width(), nh2)
 
@@ -4221,30 +4639,27 @@ class PreviewWindow(QWidget):
         self._wechat_min_latched = False
         # 图层：跟随里也顺带看一眼升起沿（vis 定时器不改 Z）
         self._sync_dock_z_with_wechat(window)
-        wr = window_screen_rect(window.hwnd)
-        if wr is None:
+        wr_raw = window_screen_rect(window.hwnd)
+        if wr_raw is None:
             return
-        dpr = self._screen_dpr_for_hwnd(window.hwnd)
-        scale = max(float(dpr or 1.0), float(self.devicePixelRatioF() or 1.0))
-        wr_h = wr[3] - wr[1]
-        if scale < 1.5 and wr_h >= 1100:
-            scale = 2.0
-        work_phys = self._work_area_physical(window.hwnd)
+        wr, scale, why = self._dock_scale_for_wechat(window.hwnd, wr_raw)
+        work = self._work_area_for_dock(window.hwnd, scale)
         # 跟随用当前外框宽，避免客户区宽被当成外框宽再放大
         fg = self.frameGeometry()
         logical_w = min(400, max(260, fg.width()))
-        panel_w_phys = int(logical_w * scale)
-        geo_phys = compute_dock_beside(
+        panel_w = int(logical_w * scale)
+        geo = compute_dock_beside(
             window.hwnd,
-            panel_w_phys,
+            panel_w,
             None,
             gap=0,
-            work=work_phys,
+            work=work,
             min_w=int(260 * scale),
+            anchor_rect=wr,
         )
-        if geo_phys is None:
+        if geo is None:
             return
-        x, y, w, h = geo_phys
+        x, y, w, h = geo
         fx, fy, fw, fh = self._phys_to_dock_logical(x, y, w, h, scale)
         cur = self.frameGeometry()
         if (
@@ -4254,15 +4669,15 @@ class PreviewWindow(QWidget):
             or abs(cur.height() - fh) > 8
         ):
             self._apply_frame_geometry(fx, fy, fw, fh)
-            self._flush_to_wechat_visible(window.hwnd)
-        else:
-            # 位置够近时仍做可见外框微校正（消黑缝）
+            if why != "inflate":
+                self._flush_to_wechat_visible(window.hwnd)
+        elif why != "inflate":
             self._flush_to_wechat_visible(window.hwnd)
         self._show_collapse_btn()
         self._ensure_wechat_layout(force=False)
 
     def _sync_detail_toggle_label(self) -> None:
-        self.btn_detail.setText("识别详情")
+        self.btn_detail.setText("对话详情")
 
     def _on_detail_badge_clicked(self) -> None:
         """compose 栏气泡：切换识别详情展开/折叠。"""
@@ -4410,7 +4825,7 @@ class PreviewWindow(QWidget):
     def clear_results(self) -> None:
         """清空识别详情与候选，不影响预览采集。"""
         if self._analyze and self._analyze.isRunning():
-            self.status.setText("分析进行中，请稍后再清屏")
+            self.status.setText("分析进行中，请稍后再清理屏幕")
             return
         self._last_result = None
         self._clear_candidate_actions()
@@ -4433,7 +4848,7 @@ class PreviewWindow(QWidget):
         self.btn_detail.setChecked(False)
         self.btn_detail.blockSignals(False)
         self._on_detail_toggled(False)
-        self._flash_status("已清屏", linger_ms=2000)
+        self._flash_status("已清理屏幕", linger_ms=2000)
 
     def _clear_candidate_actions(self) -> None:
         while self.actions_host.count():
@@ -4838,7 +5253,7 @@ class PreviewWindow(QWidget):
         last = float(getattr(self, "_contact_last_identify_at", 0) or 0)
         if last <= 0:
             return False
-        return (now - last) >= 1.5
+        return (now - last) >= 0.9
 
     def _poll_contact_header(self) -> None:
         if not self._contact_watch_armed:
@@ -4862,8 +5277,7 @@ class PreviewWindow(QWidget):
             self._contact_soft_verify_at = 0.0
             self._refresh_contact_title(force=True)
             return
-        if named and now < cool_until:
-            return
+        # 冷却期内仍盯顶栏指纹：否则刚识名后立刻切会话会感觉「卡住」
         window = self._selected_window()
         if window is None or is_minimized(window.hwnd):
             return
@@ -4917,7 +5331,7 @@ class PreviewWindow(QWidget):
             }
             if name in bad or name.lower() in {b.lower() for b in bad}:
                 self._contact_last_identify_at = time.monotonic()
-                self._contact_identify_cool_until = time.monotonic() + 1.2
+                self._contact_identify_cool_until = time.monotonic() + 0.7
                 return
             if name:
                 from joy.core.contact_memory import (
@@ -4943,8 +5357,8 @@ class PreviewWindow(QWidget):
                             name[:40],
                         )
                         self._contact_last_identify_at = time.monotonic()
-                        self._contact_identify_cool_until = time.monotonic() + 1.5
-                        self._contact_soft_verify_at = time.monotonic() + 1.5
+                        self._contact_identify_cool_until = time.monotonic() + 0.75
+                        self._contact_soft_verify_at = time.monotonic() + 0.75
                         return
                 else:
                     self._contact_flip_pending = ""
@@ -4955,13 +5369,13 @@ class PreviewWindow(QWidget):
                 self._set_contact_name(name)
                 now = time.monotonic()
                 self._contact_last_identify_at = now
-                # 约 1.5s 一轮重验；冷却略短于周期，避免卡死不更新
-                self._contact_identify_cool_until = now + 1.2
+                # 约 1s 一轮重验；冷却略短，切会话可更快补识
+                self._contact_identify_cool_until = now + 0.7
                 self._contact_soft_verify_at = 0.0
 
         def _err(_msg: str) -> None:
             self._contact_last_identify_at = time.monotonic()
-            self._contact_identify_cool_until = time.monotonic() + 5.0
+            self._contact_identify_cool_until = time.monotonic() + 3.0
 
         worker.finished_ok.connect(_ok)
         worker.finished_err.connect(_err)
@@ -5038,8 +5452,8 @@ class PreviewWindow(QWidget):
         if ok and self.is_dock_mode():
             # 微信已调出：立刻把侧窗贴回来（不等下一拍轮询）
             self._dock_hidden_for_wechat = True
-            self._dock_to_wechat()
-            QTimer.singleShot(80, self._dock_to_wechat)
+            self._schedule_dock_to_wechat(0)
+            self._schedule_dock_to_wechat(120)
 
     def run_analyze(self, *, auto: bool = False) -> None:
         window = self._selected_window()
@@ -5257,7 +5671,47 @@ class PreviewWindow(QWidget):
         except Exception as exc:
             log.warning("memory append sent failed: %s", exc)
 
-    def _on_clear_memory(self) -> None:
+    def _open_context_hub(self) -> None:
+        """… 菜单 → 上下文二级面板（导入 / 同步 / 清除 Tab）。"""
+        from joy.app.context_hub import ContextHubDialog
+
+        title = (self._contact_name or "").strip()
+        n, buckets = 0, 0
+        if title:
+            try:
+                from joy.core.contact_memory import count_related_memory
+
+                n, buckets = count_related_memory(title)
+            except Exception:
+                n, buckets = 0, 0
+        steps = max(
+            6,
+            min(80, int(getattr(self.cfg.chat, "memory_pull_scroll_steps", 24) or 24)),
+        )
+        dlg = ContextHubDialog(
+            self,
+            contact_title=title,
+            scroll_steps=steps,
+            memory_count=n,
+            memory_buckets=buckets,
+            pull_busy=bool(getattr(self, "_history_pull_busy", False)),
+        )
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        action = (dlg.result_action or "").strip()
+        if action == "import":
+            self._run_import_memory(
+                dlg.result_raw, me_names=dlg.result_me_names or None
+            )
+        elif action == "sync":
+            self._run_pull_memory(
+                me_names=dlg.result_me_names or "",
+                scroll_steps=int(dlg.result_scroll_steps),
+            )
+        elif action == "clear":
+            self._run_clear_memory()
+
+    def _run_clear_memory(self) -> None:
         title = (self._contact_name or "").strip()
         if not title:
             QMessageBox.information(
@@ -5265,32 +5719,6 @@ class PreviewWindow(QWidget):
                 "清除上下文",
                 "请先识别到会话联系人（顶栏有名字）后再清除。",
             )
-            return
-        try:
-            from joy.core.contact_memory import count_related_memory
-
-            n, buckets = count_related_memory(title)
-        except Exception:
-            n, buckets = 0, 0
-        bucket_note = f"，约 {buckets} 个本地桶" if buckets > 1 else ""
-        ret = QMessageBox.question(
-            self,
-            "清除上下文",
-            (
-                f"将清空「{title}」的全部本地上下文"
-                + (f"（约 {n} 条记忆{bucket_note}）" if n or buckets else "")
-                + "：\n"
-                "· 聊天记忆（含同步/导入）\n"
-                "· 话题状态（事实 / 已讨论点）\n"
-                "· 我的回复库（防复读）\n"
-                "· 同名 OCR 变体（如 & / + 写岔的文件）\n"
-                "· 识图缓存\n\n"
-                "只删 Joy 本地文件，不影响微信。\n\n确定？"
-            ),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if ret != QMessageBox.StandardButton.Yes:
             return
         try:
             from joy.core.contact_memory import clear_memory
@@ -5303,7 +5731,9 @@ class PreviewWindow(QWidget):
             f"已清空「{title}」全部上下文 · {removed} 条", linger_ms=4000
         )
 
-    def _on_import_memory(self) -> None:
+    def _run_import_memory(
+        self, raw: str, *, me_names: str | None = None
+    ) -> None:
         title = (self._contact_name or "").strip()
         if not title:
             QMessageBox.information(
@@ -5312,69 +5742,16 @@ class PreviewWindow(QWidget):
                 "请先识别到会话联系人（顶栏有名字）后再导入。",
             )
             return
-        dlg = QDialog(self)
-        dlg.setWindowTitle(f"导入上下文 · {title}")
-        dlg.resize(480, 420)
-        lay = QVBoxLayout(dlg)
-        tip = QLabel(
-            "支持微信官方导出（昵称 + 时间 + 正文），也支持「我: / 对方:」。\n"
-            "私聊：顶栏联系人=对方；其余发言者默认算我（如 Moky / moky）。\n"
-            "群聊：请填写「我的昵称」，否则无法区分哪句是你说的。"
-        )
-        tip.setWordWrap(True)
-        lay.addWidget(tip)
-        me_row = QHBoxLayout()
-        me_row.addWidget(QLabel("我的昵称"))
-        me_edit = QLineEdit()
-        me_edit.setPlaceholderText("私聊可空；群聊必填，多个用逗号分隔")
-        me_row.addWidget(me_edit, stretch=1)
-        lay.addLayout(me_row)
-        edit = QPlainTextEdit()
-        edit.setPlaceholderText(
-            "Moky\n2026年09月25日 22:18\n你好\n\n"
-            "moky\n2026年09月25日 22:25\n在的\n"
-        )
-        lay.addWidget(edit, stretch=1)
-        row = QHBoxLayout()
-        btn_file = QPushButton("从文件…")
-        row.addWidget(btn_file)
-        row.addStretch(1)
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("导入")
-        row.addWidget(buttons)
-        lay.addLayout(row)
-
-        def _pick_file() -> None:
-            path, _ = QFileDialog.getOpenFileName(
-                dlg, "选择聊天记录文本", "", "文本 (*.txt *.log *.md);;所有文件 (*.*)"
-            )
-            if not path:
-                return
-            try:
-                edit.setPlainText(Path(path).read_text(encoding="utf-8"))
-            except Exception:
-                try:
-                    edit.setPlainText(Path(path).read_text(encoding="gbk", errors="replace"))
-                except Exception as exc:
-                    QMessageBox.warning(dlg, "读取失败", str(exc))
-
-        btn_file.clicked.connect(_pick_file)
-        buttons.accepted.connect(dlg.accept)
-        buttons.rejected.connect(dlg.reject)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        raw = edit.toPlainText().strip()
-        if not raw:
+        text = (raw or "").strip()
+        if not text:
             return
         try:
             from joy.core.contact_memory import import_transcript
 
             parsed, added = import_transcript(
                 title,
-                raw,
-                me_names=me_edit.text().strip() or None,
+                text,
+                me_names=(me_names or "").strip() or None,
                 keep_max=int(getattr(self.cfg.chat, "memory_keep_max", 400) or 400),
             )
             self._flash_status(
@@ -5384,7 +5761,9 @@ class PreviewWindow(QWidget):
         except Exception as exc:
             QMessageBox.warning(self, "导入失败", str(exc))
 
-    def _on_pull_memory(self) -> None:
+    def _run_pull_memory(
+        self, *, me_names: str = "", scroll_steps: int | None = None
+    ) -> None:
         title = (self._contact_name or "").strip()
         if not title:
             QMessageBox.information(
@@ -5397,50 +5776,27 @@ class PreviewWindow(QWidget):
         if window is None or is_minimized(window.hwnd):
             QMessageBox.information(self, "同步上下文", "请先选中可用的微信窗口。")
             return
-        steps = max(
-            6,
-            min(80, int(getattr(self.cfg.chat, "memory_pull_scroll_steps", 24) or 24)),
-        )
-        ret = QMessageBox.question(
-            self,
-            "同步上下文",
-            (
-                f"将对当前会话「{title}」自动同步上下文：\n\n"
-                "1. 像素定位倒数第二条消息 → 右键\n"
-                "2. OCR 点「多选」\n"
-                f"3. 上滑 {steps} 步后 OCR 点「选择到这里」\n"
-                "4. OCR 点底栏「复制」并写入记忆\n\n"
-                "同步期间会暂停联系人识图，请勿动鼠标键盘。\n"
-                "取样步数可在设置「聊天与发送 → 同步上下文」调整。\n"
-                "失败时可改用「导入上下文」手动粘贴。\n\n"
-                "开始？"
-            ),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if ret != QMessageBox.StandardButton.Yes:
+        if getattr(self, "_history_pull_busy", False):
+            QMessageBox.information(self, "同步上下文", "已有同步任务在进行中。")
             return
 
-        # 群聊可填我的昵称
-        me_names = ""
-        me_dlg = QDialog(self)
-        me_dlg.setWindowTitle("我的昵称（可选）")
-        me_lay = QVBoxLayout(me_dlg)
-        me_lay.addWidget(
-            QLabel("私聊一般可留空（联系人=对方，其它发言=我）。\n群聊请填写你的群昵称：")
+        steps = max(
+            6,
+            min(
+                80,
+                int(
+                    scroll_steps
+                    if scroll_steps is not None
+                    else getattr(self.cfg.chat, "memory_pull_scroll_steps", 24) or 24
+                ),
+            ),
         )
-        me_edit = QLineEdit()
-        me_edit.setPlaceholderText("可空；多个用逗号分隔")
-        me_lay.addWidget(me_edit)
-        bb = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        bb.accepted.connect(me_dlg.accept)
-        bb.rejected.connect(me_dlg.reject)
-        me_lay.addWidget(bb)
-        if me_dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        me_names = me_edit.text().strip()
+        # 写回配置，便于下次默认
+        try:
+            self.cfg.chat.memory_pull_scroll_steps = steps
+            self.cfg.save()
+        except Exception:
+            pass
 
         compose_top = 0.78
         contact_left = float(getattr(self.cfg.capture.crop, "left", 0.22) or 0.22)
@@ -5465,13 +5821,7 @@ class PreviewWindow(QWidget):
             me_names=me_names,
             compose_top=compose_top,
             contact_left=max(0.28, contact_left),
-            scroll_steps=max(
-                6,
-                min(
-                    80,
-                    int(getattr(self.cfg.chat, "memory_pull_scroll_steps", 24) or 24),
-                ),
-            ),
+            scroll_steps=steps,
             keep_max=int(getattr(self.cfg.chat, "memory_keep_max", 400) or 400),
             parent=self,
         )
@@ -5494,7 +5844,7 @@ class PreviewWindow(QWidget):
             QMessageBox.warning(
                 self,
                 "同步失败",
-                f"{msg}\n\n可改用「导入上下文」手动粘贴微信复制结果。",
+                f"{msg}\n\n可改用「上下文 → 导入」手动粘贴微信复制结果。",
             )
 
         worker.finished_ok.connect(_ok)
@@ -5520,12 +5870,11 @@ class PreviewWindow(QWidget):
             self.image.setText("暂停预览（微信最小化或被遮挡）")
             return
         assert isinstance(frame, CapturedFrame)
-        # 预览帧顺带盯顶栏：仅在尚未识名时用（预览与轮询哈希异构，有名后会刷 API）
+        # 预览帧顺带盯顶栏：有名后也盯（仅大换会话才识名，不会每帧打 API）
         if (
             self.is_dock_mode()
             and self._contact_watch_armed
             and frame.rgb is not None
-            and not (self._contact_name or "").strip()
         ):
             try:
                 from joy.capture.frame_ops import header_fingerprint

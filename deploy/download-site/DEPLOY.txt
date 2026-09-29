@@ -1,0 +1,35 @@
+# Joy 下载站部署说明
+#
+# 目录结构（部署后）：
+#   /var/www/joy-download/
+#     index.html
+#     assets/joy.png
+#     api/latest.json
+#     releases/Joy-0.1.0.exe
+#     nginx.example.conf
+#     scripts/publish.sh
+#
+# 1) 上传本目录到服务器
+#    scp -r deploy/download-site/* user@你的服务器:/var/www/joy-download/
+#
+# 2) 放入图标（从仓库复制）
+#    cp src/joy/assets/app/joy.png /var/www/joy-download/assets/
+#
+# 3) 配置 Nginx
+#    sudo cp nginx.example.conf /etc/nginx/sites-available/joy-download
+#    编辑 server_name / root
+#    sudo ln -sf /etc/nginx/sites-available/joy-download /etc/nginx/sites-enabled/
+#    sudo nginx -t && sudo systemctl reload nginx
+#
+# 4) 发布新版本（在服务器上）
+#    chmod +x scripts/publish.sh
+#    ./scripts/publish.sh /tmp/Joy.exe 0.1.1 "本次更新说明"
+#
+# 5) 浏览器打开
+#    http://你的域名/           → 下载页
+#    http://你的域名/api/latest.json → 给客户端热更新用
+#
+# 注意：
+# - latest.json 里的 url 可以是相对路径 /releases/...（同域）
+#   或完整 https://域名/releases/...（客户端更省事）
+# - 热更新客户端应请求完整 URL：https://域名/api/latest.json

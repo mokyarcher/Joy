@@ -45,6 +45,17 @@ hiddenimports += collect_submodules("joy")
 hiddenimports += collect_submodules("rapidocr_onnxruntime")
 
 datas = collect_data_files("rapidocr_onnxruntime")
+# 应用图标（运行时 load_app_icon / 托盘）
+datas += [
+    (
+        str(SRC / "joy" / "assets" / "app" / "joy.ico"),
+        "joy/assets/app",
+    ),
+    (
+        str(SRC / "joy" / "assets" / "app" / "joy.png"),
+        "joy/assets/app",
+    ),
+]
 binaries = collect_dynamic_libs("onnxruntime")
 # OpenCV / shapely 原生库由各自 hook 随 import 带上即可
 
@@ -141,4 +152,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=str(ROOT / "src" / "joy" / "assets" / "app" / "joy.ico"),
+    # 与源码 python 一致声明 PerMonitorV2，避免侧窗高度被误除 DPI 裁切底栏
+    manifest=str(ROOT / "packaging" / "joy.manifest"),
 )
